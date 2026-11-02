@@ -9,3 +9,9 @@ urlpatterns += [path('accounts/signup/',accounts.signup,name='signup'),path('acc
 from pantry.views import households
 
 urlpatterns += [path('households/new/', households.create, name='household_create')]
+
+from pantry.views import inventory
+
+urlpatterns += [path('pantry/', inventory.index, name='inventory')]
+
+urlpatterns += [path('pantry/new/', inventory.create, name='item_create')]
