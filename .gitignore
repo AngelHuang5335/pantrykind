@@ -9,5 +9,6 @@ staticfiles/
 media/
 .coverage
 htmlcov/
+test-results/
 *.log
 .DS_Store
