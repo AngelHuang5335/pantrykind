@@ -11,7 +11,7 @@ from datetime import timedelta
 
 @household_required
 def index(request):
-    items=Item.objects.filter(household=request.household,archived=False)
+    items=Item.objects.filter(household=request.household,archived=request.GET.get('status')=='archived')
     query=request.GET.get('q','').strip()[:120]
     if query:items=items.filter(Q(name__icontains=query)|Q(notes__icontains=query))
     status=request.GET.get('status','')
@@ -72,3 +72,12 @@ def stock_action(request,pk,kind):
             messages.success(request,'Stock movement recorded.')
             return redirect('item_detail',pk=item.pk)
     return render(request,'inventory/action.html',{'form':form,'item':item,'heading':STOCK_ACTIONS[kind]})
+
+from django.views.decorators.http import require_POST
+@household_required
+@require_POST
+def archive(request,pk):
+    item=get_object_or_404(Item,pk=pk,household=request.household)
+    item.archived=not item.archived;item.save(update_fields=['archived','updated_at'])
+    messages.success(request,'Item archived.' if item.archived else 'Item restored.')
+    return redirect('item_detail',pk=pk)

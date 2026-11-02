@@ -21,3 +21,5 @@ urlpatterns += [path('pantry/<int:pk>/edit/', inventory.edit, name='item_edit')]
 urlpatterns += [path('pantry/<int:pk>/', inventory.detail, name='item_detail')]
 
 urlpatterns += [path('pantry/<int:pk>/action/<str:kind>/', inventory.stock_action, name='stock_action')]
+
+urlpatterns += [path('pantry/<int:pk>/archive/', inventory.archive, name='item_archive')]

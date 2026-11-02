@@ -34,3 +34,10 @@ class DateFilterTests(TestCase):
         Item.objects.create(household=home,name='No date fruit')
         r=self.client.get('/pantry/?status=soon')
         self.assertContains(r,'Today fruit');self.assertNotContains(r,'Old fruit');self.assertNotContains(r,'No date fruit')
+
+class ArchiveTests(TestCase):
+    def test_archive_is_reversible_and_post_only(self):
+        user,home=kitchen();self.client.force_login(user);item=Item.objects.create(household=home,name='Old jar')
+        self.assertEqual(self.client.get(f'/pantry/{item.pk}/archive/').status_code,405)
+        self.client.post(f'/pantry/{item.pk}/archive/');item.refresh_from_db();self.assertTrue(item.archived)
+        self.client.post(f'/pantry/{item.pk}/archive/');item.refresh_from_db();self.assertFalse(item.archived)
