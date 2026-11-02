@@ -1,6 +1,12 @@
 from django import forms
 from pantry.models import Item
 class ItemForm(forms.ModelForm):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['low_stock_at'].required=False
+    def clean_low_stock_at(self):
+        from decimal import Decimal
+        return self.cleaned_data.get('low_stock_at') or Decimal('0')
     class Meta:
         model=Item
         fields=['name','category','location','quantity','unit','expiry_date','low_stock_at','notes']
