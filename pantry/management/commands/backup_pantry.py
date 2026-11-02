@@ -12,6 +12,8 @@ class Command(BaseCommand):
         p.add_argument("destination")
 
     def handle(self, *args, **options):
+        if settings.DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":
+            raise CommandError("Use pg_dump for PostgreSQL; this command only backs up SQLite.")
         destination = Path(options["destination"]).resolve()
         source = Path(settings.DATABASES["default"]["NAME"]).resolve()
         if not source.is_file():
