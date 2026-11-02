@@ -50,3 +50,6 @@ class IngredientFormSet(BaseInlineFormSet):
             if key in seen:raise forms.ValidationError('Combine duplicate ingredients with the same unit into one line.')
             seen.add(key)
 Ingredients=inlineformset_factory(Recipe,Ingredient,fields=['name','quantity','unit'],formset=IngredientFormSet,extra=3,max_num=30,validate_max=True,can_delete=True)
+
+class ServingsForm(forms.Form):
+    servings=forms.IntegerField(min_value=1,max_value=50)
