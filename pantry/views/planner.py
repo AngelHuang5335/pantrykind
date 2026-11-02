@@ -52,3 +52,12 @@ def cook(request,pk):
     except ValidationError as error:messages.error(request,' '.join(error.messages))
     else:messages.success(request,'Meal recorded. Your pantry is up to date.')
     return redirect('planner')
+
+@household_required
+def export_calendar(request):
+    from django.http import HttpResponse
+    from pantry.calendar import calendar
+    plans=MealPlan.objects.filter(household=request.household,date__gte=timezone.localdate(),cooked__isnull=True).select_related('recipe')[:366]
+    response=HttpResponse(calendar(plans),content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition']='attachment; filename="pantrykind-meals.ics"'
+    return response
