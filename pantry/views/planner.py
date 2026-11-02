@@ -20,3 +20,18 @@ def index(request):
     plans=list(MealPlan.objects.filter(household=request.household,date__range=(monday,monday+timedelta(days=6))).select_related('recipe','cooked'))
     days=[{'date':monday+timedelta(days=n),'plans':[p for p in plans if p.date==monday+timedelta(days=n)]} for n in range(7)]
     return render(request,'planner/index.html',{'form':form,'days':days,'monday':monday,'previous':monday-timedelta(days=7),'next':monday+timedelta(days=7)})
+
+@household_required
+@require_http_methods(['GET','POST'])
+def edit(request,pk):
+    plan=get_object_or_404(MealPlan,pk=pk,household=request.household)
+    if plan.cooked:
+        messages.error(request,'Cooked meals cannot be edited.');return redirect('planner')
+    form=MealPlanForm(request.POST or None,instance=plan,household=request.household)
+    if request.method=='POST' and form.is_valid():form.save();return redirect('planner')
+    return render(request,'planner/edit.html',{'form':form,'plan':plan})
+@household_required
+@require_POST
+def delete(request,pk):
+    get_object_or_404(MealPlan,pk=pk,household=request.household).delete()
+    messages.success(request,'Meal removed from the calendar.');return redirect('planner')

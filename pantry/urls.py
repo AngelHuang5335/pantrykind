@@ -77,3 +77,7 @@ urlpatterns += [path('accounts/password/',auth_views.PasswordChangeView.as_view(
 from pantry.views import planner
 
 urlpatterns += [path('plan/', planner.index, name='planner')]
+
+urlpatterns += [path('plan/<int:pk>/edit/', planner.edit, name='plan_edit')]
+
+urlpatterns += [path('plan/<int:pk>/delete/', planner.delete, name='plan_delete')]

@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="card narrow"><h1>Move a meal.</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button>Save plan</button> <a href="{% url 'planner' %}">Cancel</a></form><hr><form method="post" action="{% url 'plan_delete' plan.pk %}">{% csrf_token %}<button class="danger">Remove from calendar</button></form></div>{% endblock %}
