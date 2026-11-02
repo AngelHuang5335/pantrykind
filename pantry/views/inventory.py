@@ -19,3 +19,12 @@ def create(request):
         messages.success(request,'Added to your pantry.')
         return redirect('inventory')
     return render(request,'inventory/form.html',{'form':form,'heading':'Add something good'})
+
+@household_required
+@require_http_methods(['GET','POST'])
+def edit(request,pk):
+    item=get_object_or_404(Item,pk=pk,household=request.household)
+    form=ItemForm(request.POST or None,instance=item)
+    if request.method=='POST' and form.is_valid():
+        form.save();messages.success(request,'Item updated.');return redirect('inventory')
+    return render(request,'inventory/form.html',{'form':form,'heading':'Edit '+item.name})
