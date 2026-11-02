@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="card narrow"><h1>Remove {{ recipe.title }}?</h1><p>Its ingredients and instructions will be removed. Past meal records stay in your kitchen history.</p><form method="post">{% csrf_token %}<button class="danger">Remove recipe</button> <a href="{% url 'recipe_detail' recipe.pk %}">Keep it</a></form></div>{% endblock %}

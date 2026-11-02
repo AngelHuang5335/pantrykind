@@ -83,3 +83,11 @@ def cook(request,pk):
     except (ValidationError,ValueError) as error:messages.error(request,' '.join(error.messages) if isinstance(error,ValidationError) else 'Invalid meal request. Please try again.')
     else:messages.success(request,'Meal recorded. Your pantry has been updated.')
     return redirect('recipe_detail',pk=pk)
+
+@household_required
+@require_http_methods(['GET','POST'])
+def delete(request,pk):
+    recipe=get_object_or_404(Recipe,pk=pk,household=request.household)
+    if request.method=='POST':
+        recipe.delete();messages.success(request,'Recipe removed; past meal records are kept.');return redirect('recipes')
+    return render(request,'recipes/delete.html',{'recipe':recipe})
