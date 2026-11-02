@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Your inbox · PantryKind{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">A gentle nudge</p><h1>Your kitchen inbox</h1>
+  <p class="muted">A daily snapshot of food with upcoming label dates. Only you can see your inbox.</p></div></div>
+<div class="split">
+  <section class="card"><h2>Make a little time for what's at home.</h2>
+    <p class="muted">Kitchen time: {{ request.household.timezone_name }}. Reminders appear here after your chosen hour when there is something to use soon.</p>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button>Save preferences</button></form>
+  </section>
+  <section>
+    {% for notification in page %}
+    <article class="card">
+      <p class="eyebrow">{% if notification.read_at %}Read{% else %}New reminder{% endif %} · {{ notification.created_at|date:'M j, Y H:i' }}</p>
+      <h2>{{ notification.payload.total }} batch{{ notification.payload.total|pluralize }} to keep in mind</h2>
+      <p class="muted">Snapshot for {{ notification.payload.date }}. Check your pantry for current quantities.</p>
+      <ul>{% for item in notification.payload.items %}<li><strong>{{ item.name }}</strong> · {{ item.quantity }} {{ item.unit }} · Label: {{ item.expiry_date }}</li>{% endfor %}</ul>
+      {% if notification.payload.total > 50 %}<p class="muted">Showing the first 50 batches.</p>{% endif %}
+      <a href="{% url 'inventory' %}?status=soon">See food to use soon →</a>
+      {% if not notification.read_at %}<form method="post" action="{% url 'reminder_read' notification.pk %}">{% csrf_token %}<button class="secondary">Mark as read</button></form>{% endif %}
+    </article>
+    {% empty %}<div class="card empty"><h2>A quiet kitchen.</h2><p class="muted">Your reminders will appear here once enabled and scheduled.</p></div>{% endfor %}
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Previous</a>{% endif %}
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next</a>{% endif %}
+  </section>
+</div>
+{% endblock %}

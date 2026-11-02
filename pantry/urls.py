@@ -167,3 +167,10 @@ urlpatterns += [
     path("shopping/<int:pk>/purchase/", shopping.purchase, name="shopping_purchase"),
     path("shopping/purchases/", shopping.purchases, name="shopping_purchases"),
 ]
+
+from pantry.views import reminders
+
+urlpatterns += [
+    path("inbox/", reminders.inbox, name="reminder_inbox"),
+    path("inbox/<int:pk>/read/", reminders.mark_read, name="reminder_read"),
+]

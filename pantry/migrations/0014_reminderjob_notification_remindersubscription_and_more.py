@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pantry", "0013_cooklog_actor_purchasereceipt"),
     ]
