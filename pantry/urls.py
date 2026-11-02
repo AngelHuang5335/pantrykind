@@ -101,3 +101,9 @@ urlpatterns += [path('data/shopping.csv', transfers.export_shopping, name='shopp
 urlpatterns += [path('data/import/', transfers.import_inventory, name='inventory_import')]
 
 urlpatterns += [path('data/import/confirm/', transfers.confirm_import, name='inventory_import_confirm')]
+
+from pantry.views import api
+
+urlpatterns += [path('api/v1/inventory/', api.inventory, name='api_inventory')]
+
+urlpatterns += [path('api/v1/shopping/', api.shopping, name='api_shopping')]
