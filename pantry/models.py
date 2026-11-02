@@ -283,3 +283,54 @@ class PurchaseReceipt(models.Model):
         constraints = [
             models.CheckConstraint(condition=models.Q(quantity__gt=0), name="positive_purchase")
         ]
+
+
+class ReminderSubscription(models.Model):
+    membership = models.OneToOneField(
+        Membership, on_delete=models.CASCADE, related_name="reminders"
+    )
+    enabled = models.BooleanField(default=False)
+    local_hour = models.PositiveSmallIntegerField(
+        default=9, validators=[MinValueValidator(0), MaxValueValidator(23)]
+    )
+
+
+class ReminderJob(models.Model):
+    membership = models.ForeignKey(Membership, on_delete=models.CASCADE)
+    local_date = models.DateField()
+    payload = models.JSONField(default=dict)
+    status = models.CharField(
+        max_length=12,
+        default="pending",
+        choices=[
+            ("pending", "Pending"),
+            ("delivering", "Delivering"),
+            ("sent", "Sent"),
+            ("dead", "Needs attention"),
+            ("cancelled", "Cancelled"),
+        ],
+    )
+    attempts = models.PositiveSmallIntegerField(default=0)
+    available_at = models.DateTimeField(default=timezone.now)
+    lease_until = models.DateTimeField(null=True)
+    lease_token = models.UUIDField(null=True)
+    last_error = models.CharField(max_length=80, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["membership", "local_date"], name="one_daily_reminder")
+        ]
+        indexes = [models.Index(fields=["status", "available_at"])]
+
+
+class Notification(models.Model):
+    job = models.OneToOneField(ReminderJob, on_delete=models.CASCADE, related_name="notification")
+    membership = models.ForeignKey(Membership, on_delete=models.CASCADE)
+    payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
