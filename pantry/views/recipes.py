@@ -8,8 +8,23 @@ from pantry.models import Recipe
 
 @household_required
 def index(request):
-    recipes=Recipe.objects.filter(household=request.household)
-    return render(request,'recipes/index.html',{'recipes':recipes})
+    from pantry.matching import match_recipe
+    from pantry.models import Item
+    from django.db.models import Q,F
+    from django.utils import timezone
+    query=request.GET.get('q','').strip()[:120]
+    recipes=Recipe.objects.filter(household=request.household).prefetch_related('ingredients')
+    if query:recipes=recipes.filter(title__icontains=query)
+    items=list(Item.objects.filter(household=request.household,archived=False,quantity__gt=0).filter(Q(expiry_date__isnull=True)|Q(expiry_date__gte=timezone.localdate())).order_by(F('expiry_date').asc(nulls_last=True),'pk'))
+    cards=[]
+    for recipe in recipes:
+        matches=match_recipe(recipe,items=items)
+        recipe.matched_count=sum(m['ready'] for m in matches);recipe.total_count=len(matches)
+        recipe.is_ready=bool(matches) and recipe.matched_count==recipe.total_count
+        cards.append(recipe)
+    cards.sort(key=lambda r:(not r.is_ready,-r.matched_count,r.title))
+    if request.GET.get('ready')=='1':cards=[r for r in cards if r.is_ready]
+    return render(request,'recipes/index.html',{'recipes':cards,'query':query,'ready_only':request.GET.get('ready')=='1'})
 
 @household_required
 @require_http_methods(['GET','POST'])
