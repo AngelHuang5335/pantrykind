@@ -39,3 +39,13 @@ urlpatterns += [path('shopping/<int:pk>/delete/', shopping.delete, name='shoppin
 urlpatterns += [path('shopping/clear-checked/', shopping.clear_checked, name='shopping_clear_checked')]
 
 urlpatterns += [path('shopping/low-stock/', shopping.add_low_stock, name='shopping_low_stock')]
+
+from pantry.views import recipes
+
+urlpatterns += [path('recipes/', recipes.index, name='recipes')]
+
+urlpatterns += [path('recipes/new/', recipes.edit, name='recipe_create')]
+
+urlpatterns += [path('recipes/<int:pk>/edit/', recipes.edit, name='recipe_edit')]
+
+urlpatterns += [path('recipes/<int:pk>/', recipes.detail, name='recipe_detail')]

@@ -29,3 +29,24 @@ class ShoppingForm(forms.ModelForm):
         name=self.cleaned_data['name'].strip()
         if not name:raise forms.ValidationError('Enter a shopping item.')
         return name
+
+from django.forms import inlineformset_factory,BaseInlineFormSet
+from pantry.models import Recipe,Ingredient
+from pantry.normalization import food_key
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model=Recipe;fields=['title','description','servings','minutes','instructions']
+        widgets={'instructions':forms.Textarea(attrs={'rows':7})}
+class IngredientFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):return
+        active=[f.cleaned_data for f in self.forms if f.cleaned_data and not f.cleaned_data.get('DELETE')]
+        if not active:raise forms.ValidationError('Add at least one ingredient.')
+        seen=set()
+        for entry in active:
+            key=(food_key(entry['name']),entry['unit'])
+            if not key[0]:raise forms.ValidationError('Ingredient names cannot be blank.')
+            if key in seen:raise forms.ValidationError('Combine duplicate ingredients with the same unit into one line.')
+            seen.add(key)
+Ingredients=inlineformset_factory(Recipe,Ingredient,fields=['name','quantity','unit'],formset=IngredientFormSet,extra=3,max_num=30,validate_max=True,can_delete=True)

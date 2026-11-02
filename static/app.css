@@ -7,3 +7,5 @@
 .split{display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}.shopping-row{padding:14px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:space-between}.shopping-row:last-child{border:0}.shopping-row.done strong{text-decoration:line-through;color:var(--muted)}@media(max-width:780px){.split{grid-template-columns:1fr}}
 
 @media print{.site-header,.site-footer,.skip,.messages,form,.filters,.button,button,.pagination{display:none!important}body{background:white;color:black}.container{max-width:none;padding:0}.split{display:block}.split>section:first-child{display:none}.card{border:0;padding:0}.shopping-row{break-inside:avoid;justify-content:flex-start;gap:10px}.shopping-row:before{content:'□';font-size:22px}.shopping-row.done{display:none}.hero-visual{transform:none;box-shadow:none}}
+
+.ingredient-form{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start}.ingredient-form input[type=hidden]{display:none}@media(max-width:600px){.ingredient-form{grid-template-columns:1fr 1fr}.ingredient-form p:first-child{grid-column:1/-1}}
