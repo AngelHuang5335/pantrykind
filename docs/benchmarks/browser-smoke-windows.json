@@ -1,0 +1,9 @@
+{
+  "mode": "existing Chrome tab through existing CDP connection; no browser launched",
+  "checks": [
+    "Partial purchase, label date, stock ledger and repeated POST: passed",
+    "Purchased kg batch cooks against g ingredient; replay does not deduct twice: passed",
+    "Opt-in, scheduler, leased delivery, private inbox and mark read: passed",
+    "Seven primary pages at 390px have a main landmark and no horizontal overflow: passed"
+  ]
+}

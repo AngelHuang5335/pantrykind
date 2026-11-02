@@ -33,6 +33,15 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(PurchaseReceipt.objects.count(), 1)
         self.assertContains(self.client.get("/shopping/purchases/"), "Oats")
 
+    def test_browser_retry_after_clearing_list_returns_original_purchase(self):
+        data = self.data | {"amount": 3}
+        first = self.client.post(self.url, data)
+        self.client.post("/shopping/clear-checked/")
+        retry = self.client.post(self.url, data)
+        self.assertEqual(retry.status_code, 302)
+        self.assertEqual(retry.url, first.url)
+        self.assertEqual(PurchaseReceipt.objects.count(), 1)
+
     def test_cross_household_purchase_is_not_found(self):
         _, home = kitchen("other")
         foreign = add_to_shopping(home, "Private food", 1, "pack")

@@ -117,11 +117,12 @@ def add_low_stock(request):
 @require_http_methods(["GET", "POST"])
 def purchase(request, pk):
     from django.core.exceptions import ValidationError
+    from django.http import Http404
     from pantry.forms import PurchaseForm
     from pantry.services import purchase_shopping
 
-    entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
-    form = PurchaseForm(request.POST or None, initial={"amount": entry.quantity})
+    entry = ShoppingEntry.objects.filter(pk=pk, household=request.household).first()
+    form = PurchaseForm(request.POST or None, initial={"amount": entry.quantity if entry else None})
     if request.method == "POST" and form.is_valid():
         try:
             receipt = purchase_shopping(
@@ -129,11 +130,15 @@ def purchase(request, pk):
             )
         except ValidationError as error:
             form.add_error(None, error)
+        except ShoppingEntry.DoesNotExist:
+            raise Http404 from None
         else:
             messages.success(request, "Purchase saved. A new batch is now in your pantry.")
             if receipt.item_id:
                 return redirect("item_detail", pk=receipt.item_id)
             return redirect("shopping_purchases")
+    if not entry:
+        raise Http404
     return render(request, "shopping/purchase.html", {"entry": entry, "form": form})
 
 

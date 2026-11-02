@@ -5,6 +5,9 @@ from pantry.templatetags.pantry_tags import quantity
 
 
 class QuantityDisplayTests(SimpleTestCase):
+    def test_inbox_snapshot_uses_the_same_human_quantity_labels(self):
+        self.assertEqual(quantity({"quantity": "1.000", "unit": "l"}), "1 L")
+
     def test_human_units_and_decimal_precision(self):
         for amount, unit, expected in [
             ("1.000", "bunch", "1 bunch"),
