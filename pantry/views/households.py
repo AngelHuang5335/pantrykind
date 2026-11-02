@@ -40,4 +40,13 @@ def settings(request):
     if request.method=='POST':
         if request.membership.role!='owner':return HttpResponseForbidden('Only the kitchen owner can change these settings.')
         if form.is_valid():form.save();messages.success(request,'Kitchen preferences updated.');return redirect('household_settings')
-    return render(request,'households/settings.html',{'form':form,'members':request.household.memberships.select_related('user')})
+    return render(request,'households/settings.html',{'form':form,'members':request.household.memberships.select_related('user'),'kitchens':request.user.pantry_memberships.select_related('household')})
+
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
+@login_required
+@require_POST
+def switch(request,pk):
+    member=get_object_or_404(Membership,user=request.user,household_id=pk)
+    request.session['household_id']=member.household_id
+    return redirect('dashboard')
