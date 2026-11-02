@@ -11,7 +11,8 @@ from pantry.models import Recipe
 @household_required
 @household_write
 def index(request):
-    from pantry.matching import match_recipe
+    from pantry.matching import index_stock, match_recipe
+    from django.core.paginator import Paginator
     from pantry.models import Item
     from django.db.models import Q, F
     from django.utils import timezone
@@ -25,9 +26,10 @@ def index(request):
         .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=timezone.localdate()))
         .order_by(F("expiry_date").asc(nulls_last=True), "pk")
     )
+    stock_index = index_stock(items)
     cards = []
     for recipe in recipes:
-        matches = match_recipe(recipe, items=items)
+        matches = match_recipe(recipe, stock_index=stock_index)
         recipe.matched_count = sum(m["ready"] for m in matches)
         recipe.total_count = len(matches)
         recipe.is_ready = bool(matches) and recipe.matched_count == recipe.total_count
@@ -35,11 +37,13 @@ def index(request):
     cards.sort(key=lambda r: (not r.is_ready, -r.matched_count, r.title))
     if request.GET.get("ready") == "1":
         cards = [r for r in cards if r.is_ready]
+    page = Paginator(cards, 24).get_page(request.GET.get("page"))
     return render(
         request,
         "recipes/index.html",
         {
-            "recipes": cards,
+            "recipes": page,
+            "page": page,
             "query": query,
             "ready_only": request.GET.get("ready") == "1",
         },

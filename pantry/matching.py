@@ -16,14 +16,28 @@ def measure(unit):
     return UNIT_BASE.get(unit, (unit, Decimal("1")))
 
 
-def match_recipe(recipe, servings=None, items=None):
+def index_stock(items):
+    """Build once for a recipe catalogue; preserve FEFO order within each food/unit family."""
+    index = {}
+    for item in items:
+        family, multiplier = measure(item.unit)
+        key = (food_key(item.name), family)
+        group = index.setdefault(key, {"have_base": Decimal(0), "batches": []})
+        group["have_base"] += item.quantity * multiplier
+        group["batches"].append((item, multiplier))
+    return index
+
+
+def match_recipe(recipe, servings=None, items=None, stock_index=None):
     factor = Decimal(str(servings or recipe.servings)) / recipe.servings
-    if items is None:
+    if items is None and stock_index is None:
         items = list(
             Item.objects.filter(household=recipe.household, archived=False, quantity__gt=0)
             .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=timezone.localdate()))
             .order_by(F("expiry_date").asc(nulls_last=True), "pk")
         )
+    if stock_index is None:
+        stock_index = index_stock(items)
     required = {}
     for ingredient in recipe.ingredients.all():
         family, multiplier = measure(ingredient.unit)
@@ -38,12 +52,10 @@ def match_recipe(recipe, servings=None, items=None):
                 "have_base": Decimal(0),
             }
         required[key]["need_base"] += ingredient.quantity * multiplier * factor
-    for item in items:
-        family, multiplier = measure(item.unit)
-        key = (food_key(item.name), family)
-        if key in required:
-            required[key]["have_base"] += item.quantity * multiplier
-            required[key]["batches"].append((item, multiplier))
+    for key, value in required.items():
+        if key in stock_index:
+            value["have_base"] = stock_index[key]["have_base"]
+            value["batches"] = list(stock_index[key]["batches"])
     result = []
     for value in required.values():
         value["needed"] = value["need_base"] / value["factor"]
