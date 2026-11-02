@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="card narrow"><p class="eyebrow">Make yourself at home</p><h1>Name your kitchen.</h1><p class="muted">A household keeps your pantry and shopping list together. You can invite others later.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button>Create kitchen</button></form></div>{% endblock %}
