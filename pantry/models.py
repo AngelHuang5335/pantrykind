@@ -1,9 +1,12 @@
 from django.db import models
+from django.core.validators import MinValueValidator,MaxValueValidator
 
 from django.conf import settings
 
 class Household(models.Model):
     name=models.CharField(max_length=80)
+    timezone_name=models.CharField(max_length=64,default='UTC')
+    reminder_days=models.PositiveSmallIntegerField(default=7,validators=[MinValueValidator(1),MaxValueValidator(30)])
     created_at=models.DateTimeField(auto_now_add=True)
     def __str__(self):return self.name
 
@@ -48,7 +51,7 @@ class Item(models.Model):
         if days is None:return 'No date'
         if days<0:return 'Past date'
         if days==0:return 'Today'
-        if days<=7:return 'Use soon'
+        if days<=self.household.reminder_days:return 'Use soon'
         return 'In date'
 
 import uuid

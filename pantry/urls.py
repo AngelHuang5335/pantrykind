@@ -55,3 +55,5 @@ urlpatterns += [path('recipes/<int:pk>/shop/', recipes.shop_missing, name='recip
 urlpatterns += [path('recipes/<int:pk>/cook/', recipes.cook, name='recipe_cook')]
 
 urlpatterns += [path('recipes/<int:pk>/delete/', recipes.delete, name='recipe_delete')]
+
+urlpatterns += [path('households/settings/', households.settings, name='household_settings')]

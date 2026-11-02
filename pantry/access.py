@@ -12,7 +12,9 @@ class HouseholdMiddleware:
             memberships=Membership.objects.filter(user=request.user).select_related('household')
             member=memberships.filter(household_id=request.session.get('household_id')).first() or memberships.order_by('pk').first()
             if member:request.household,request.membership=member.household,member
-        return self.get_response(request)
+        from django.utils import timezone
+        with timezone.override(request.household.timezone_name if request.household else 'UTC'):
+            return self.get_response(request)
 
 def household_required(view):
     @login_required

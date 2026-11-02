@@ -19,3 +19,25 @@ def create(request):
             request.session['household_id']=household.pk
         return redirect('dashboard')
     return render(request,'households/create.html',{'form':form})
+
+from django.contrib import messages
+from django.http import HttpResponseForbidden
+from pantry.access import household_required
+from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
+
+class PreferencesForm(forms.ModelForm):
+    class Meta:model=Household;fields=['name','timezone_name','reminder_days']
+    def clean_timezone_name(self):
+        name=self.cleaned_data['timezone_name']
+        try:ZoneInfo(name)
+        except (ZoneInfoNotFoundError,ValueError):raise forms.ValidationError('Use an IANA timezone, such as Asia/Shanghai or Europe/London.')
+        return name
+
+@household_required
+@require_http_methods(['GET','POST'])
+def settings(request):
+    form=PreferencesForm(request.POST or None,instance=request.household)
+    if request.method=='POST':
+        if request.membership.role!='owner':return HttpResponseForbidden('Only the kitchen owner can change these settings.')
+        if form.is_valid():form.save();messages.success(request,'Kitchen preferences updated.');return redirect('household_settings')
+    return render(request,'households/settings.html',{'form':form,'members':request.household.memberships.select_related('user')})

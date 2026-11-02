@@ -16,7 +16,7 @@ def index(request):
     if query:items=items.filter(Q(name__icontains=query)|Q(notes__icontains=query))
     status=request.GET.get('status','')
     today=timezone.localdate()
-    if status=='soon':items=items.filter(expiry_date__range=(today,today+timedelta(days=7)),quantity__gt=0)
+    if status=='soon':items=items.filter(expiry_date__range=(today,today+timedelta(days=request.household.reminder_days)),quantity__gt=0)
     elif status=='past':items=items.filter(expiry_date__lt=today,quantity__gt=0)
     elif status=='undated':items=items.filter(expiry_date__isnull=True)
     elif status=='low':items=items.filter(low_stock_at__gt=0,quantity__lte=F('low_stock_at'))
