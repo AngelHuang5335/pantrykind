@@ -124,6 +124,9 @@ def accept(request, token):
     )
     if request.method == "POST":
         with transaction.atomic():
+            from pantry.locking import lock_household
+
+            lock_household(invitation.household)
             invitation = get_object_or_404(
                 Invitation.objects.select_for_update(),
                 pk=invitation.pk,

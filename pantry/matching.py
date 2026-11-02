@@ -3,6 +3,7 @@ from django.db.models import Q, F
 from django.utils import timezone
 from pantry.models import Item
 from pantry.normalization import food_key
+from zoneinfo import ZoneInfo
 
 UNIT_BASE = {
     "g": ("mass", Decimal("1")),
@@ -31,9 +32,10 @@ def index_stock(items):
 def match_recipe(recipe, servings=None, items=None, stock_index=None):
     factor = Decimal(str(servings or recipe.servings)) / recipe.servings
     if items is None and stock_index is None:
+        today = timezone.localdate(timezone=ZoneInfo(recipe.household.timezone_name))
         items = list(
             Item.objects.filter(household=recipe.household, archived=False, quantity__gt=0)
-            .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=timezone.localdate()))
+            .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=today))
             .order_by(F("expiry_date").asc(nulls_last=True), "pk")
         )
     if stock_index is None:

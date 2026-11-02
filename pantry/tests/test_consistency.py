@@ -71,3 +71,25 @@ class ConsistencyTests(TestCase):
         self.assertEqual(CookLog.objects.count(), 1)
         self.item.refresh_from_db()
         self.assertEqual(self.item.quantity, 0)
+
+
+class HouseholdClockTests(TestCase):
+    def test_service_excludes_past_date_stock_without_http_timezone_middleware(self):
+        from datetime import date, datetime, timezone as utc_timezone
+        from unittest.mock import patch
+        from pantry.matching import match_recipe
+
+        _, home = kitchen()
+        home.timezone_name = "Asia/Shanghai"
+        home.save()
+        recipe = Recipe.objects.create(household=home, title="Rice", instructions="Cook.")
+        Ingredient.objects.create(recipe=recipe, name="Rice", quantity=1, unit="kg")
+        Item.objects.create(
+            household=home, name="Rice", quantity=1, unit="kg", expiry_date=date(2030, 1, 1)
+        )
+        # Jan 2 in this kitchen, Jan 1 in UTC: service calls must use the kitchen clock.
+        with patch(
+            "pantry.matching.timezone.now",
+            return_value=datetime(2030, 1, 1, 20, tzinfo=utc_timezone.utc),
+        ):
+            self.assertFalse(match_recipe(recipe)[0]["ready"])
