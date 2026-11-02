@@ -71,3 +71,5 @@ urlpatterns += [path('households/members/<int:pk>/remove/', households.remove_me
 urlpatterns += [path('households/members/<int:pk>/transfer/', households.transfer, name='member_transfer')]
 
 urlpatterns += [path('households/leave/', households.leave, name='household_leave')]
+
+urlpatterns += [path('accounts/password/',auth_views.PasswordChangeView.as_view(template_name='registration/password.html',success_url='/accounts/password/done/'),name='password_change'),path('accounts/password/done/',auth_views.PasswordChangeDoneView.as_view(template_name='registration/password_done.html'),name='password_change_done')]
