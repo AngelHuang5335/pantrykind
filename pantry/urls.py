@@ -97,3 +97,5 @@ from pantry.views import transfers
 urlpatterns += [path('data/pantry.csv', transfers.export_inventory, name='inventory_export')]
 
 urlpatterns += [path('data/shopping.csv', transfers.export_shopping, name='shopping_export')]
+
+urlpatterns += [path('data/import/', transfers.import_inventory, name='inventory_import')]
