@@ -25,4 +25,6 @@ def edit(request,pk=None):
 @household_required
 def detail(request,pk):
     recipe=get_object_or_404(Recipe,pk=pk,household=request.household)
-    return render(request,'recipes/detail.html',{'recipe':recipe})
+    from pantry.matching import match_recipe
+    matches=match_recipe(recipe)
+    return render(request,'recipes/detail.html',{'recipe':recipe,'matches':matches,'ready':bool(matches) and all(m['ready'] for m in matches)})
