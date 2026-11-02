@@ -25,3 +25,7 @@ urlpatterns += [path('pantry/<int:pk>/action/<str:kind>/', inventory.stock_actio
 urlpatterns += [path('pantry/<int:pk>/archive/', inventory.archive, name='item_archive')]
 
 urlpatterns += [path('pantry/<int:pk>/duplicate/', inventory.duplicate, name='item_duplicate')]
+
+from pantry.views import shopping
+
+urlpatterns += [path('shopping/', shopping.index, name='shopping')]
