@@ -90,4 +90,4 @@ CSRF_TRUSTED_ORIGINS = [
 
 MIDDLEWARE += ["pantry.security.PrivacyHeadersMiddleware"]
 
-TEMPLATES[0]['OPTIONS']['builtins']=['pantry.templatetags.pantry_tags']
+TEMPLATES[0]["OPTIONS"]["builtins"] = ["pantry.templatetags.pantry_tags"]
