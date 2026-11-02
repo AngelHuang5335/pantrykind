@@ -44,3 +44,9 @@ def edit(request,pk):
     if request.method=='POST' and form.is_valid():
         form.save();messages.success(request,'Item updated.');return redirect('inventory')
     return render(request,'inventory/form.html',{'form':form,'heading':'Edit '+item.name})
+
+@household_required
+def detail(request,pk):
+    item=get_object_or_404(Item,pk=pk,household=request.household)
+    events=item.events.select_related('actor')[:50]
+    return render(request,'inventory/detail.html',{'item':item,'events':events})
