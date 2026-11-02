@@ -1,38 +1,40 @@
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 from pantry.models import Item, StockEvent
+from pantry.locking import lock_household
+from pantry.quantities import MAX_QUANTITY, positive_quantity
 
 
 @transaction.atomic
 def record_stock(*, household, item_id, actor, kind, amount, request_id, note=""):
-    try:
-        amount = Decimal(str(amount))
-    except (InvalidOperation, TypeError, ValueError):
-        raise ValidationError("Enter a valid quantity.")
-    if (
-        not amount.is_finite()
-        or amount <= 0
-        or amount > Decimal("999999999")
-        or amount.as_tuple().exponent < -3
-    ):
-        raise ValidationError("Quantity must be positive with at most three decimal places.")
+    amount = positive_quantity(amount)
+    lock_household(household, actor)
     if kind not in dict(StockEvent._meta.get_field("kind").choices):
         raise ValidationError("Unknown stock action.")
-    item = Item.objects.select_for_update().get(pk=item_id, household=household, archived=False)
     existing = StockEvent.objects.filter(request_id=request_id).first()
     if existing:
-        if existing.item_id != item.pk or existing.kind != kind or existing.amount != amount:
+        if (
+            existing.item_id != item_id
+            or existing.item.household_id != household.pk
+            or existing.actor_id != actor.pk
+            or existing.kind != kind
+            or existing.amount != amount
+            or existing.note != note[:200]
+        ):
             raise ValidationError("This action ID has already been used.")
         return existing
+    item = Item.objects.select_for_update().get(pk=item_id, household=household, archived=False)
     delta = amount if kind == "restocked" else -amount
     available = Item.objects.filter(pk=item.pk)
     if delta < 0:
         available = available.filter(quantity__gte=amount)
+    else:
+        available = available.filter(quantity__lte=MAX_QUANTITY - amount)
     if not available.update(quantity=F("quantity") + delta, updated_at=timezone.now()):
-        raise ValidationError("There is not enough of this batch left.")
+        raise ValidationError("Quantity would exceed this batch's available range.")
     return StockEvent.objects.create(
         item=item,
         actor=actor,
@@ -49,9 +51,8 @@ from pantry.normalization import food_key
 
 @transaction.atomic
 def add_to_shopping(household, name, quantity, unit):
-    quantity = Decimal(str(quantity))
-    if not quantity.is_finite() or quantity <= 0:
-        raise ValidationError("Enter a positive shopping quantity.")
+    quantity = positive_quantity(quantity)
+    lock_household(household)
     name = name.strip()
     if (
         not name
@@ -83,8 +84,8 @@ from decimal import ROUND_UP
 
 @transaction.atomic
 def cook_recipe(*, household, recipe_id, actor, servings, request_id):
-    recipe = Recipe.objects.get(pk=recipe_id, household=household)
-    if not 1 <= servings <= 50:
+    lock_household(household, actor)
+    if type(servings) is not int or not 1 <= servings <= 50:
         raise ValidationError("Choose between 1 and 50 servings.")
     existing = CookLog.objects.filter(request_id=request_id).first()
     if existing:
@@ -95,9 +96,11 @@ def cook_recipe(*, household, recipe_id, actor, servings, request_id):
         ):
             raise ValidationError("This action ID has already been used.")
         return existing
+    recipe = Recipe.objects.select_for_update().get(pk=recipe_id, household=household)
     list(
         Item.objects.select_for_update()
         .filter(household=household, archived=False)
+        .order_by("pk")
         .values_list("pk", flat=True)
     )
     matches = match_recipe(recipe, servings)

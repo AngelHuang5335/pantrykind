@@ -85,6 +85,9 @@ def cook(request, pk):
 
     try:
         with transaction.atomic():
+            from pantry.locking import lock_household
+
+            lock_household(request.household, request.user)
             plan = get_object_or_404(
                 MealPlan.objects.select_for_update(), pk=pk, household=request.household
             )
