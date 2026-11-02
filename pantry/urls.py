@@ -63,3 +63,5 @@ urlpatterns += [path('households/<int:pk>/switch/', households.switch, name='hou
 urlpatterns += [path('households/invite/', households.invite, name='household_invite')]
 
 urlpatterns += [path('join/<str:token>/', households.accept, name='invitation_accept')]
+
+urlpatterns += [path('households/invitations/<int:pk>/revoke/', households.revoke, name='invitation_revoke')]

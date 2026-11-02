@@ -79,3 +79,10 @@ def accept(request,token):
             request.session['household_id']=invitation.household_id
         messages.success(request,'Welcome to your shared kitchen.');return redirect('dashboard')
     return render(request,'households/accept.html',{'invitation':invitation})
+
+@household_required
+@require_POST
+def revoke(request,pk):
+    if request.membership.role!='owner':return HttpResponseForbidden('Only the owner can revoke invitations.')
+    get_object_or_404(Invitation,pk=pk,household=request.household).delete()
+    messages.success(request,'Invitation revoked.');return redirect('household_settings')
