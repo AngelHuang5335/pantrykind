@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Purchase history · PantryKind{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">What came home</p><h1>Purchase history</h1></div><a href="{% url 'shopping' %}">Shopping list</a></div>
+<section class="card">
+  {% for receipt in page %}
+  <article class="shopping-row"><div class="shopping-name">
+    {% if receipt.item_id %}<a href="{% url 'item_detail' receipt.item_id %}"><strong>{{ receipt.name }}</strong></a>{% else %}<strong>{{ receipt.name }}</strong>{% endif %}
+    <span>{{ receipt|quantity }}</span><p class="muted">{{ receipt.created_at|date:'M j, Y H:i' }} · {{ receipt.actor.username|default:'Former member' }} · {{ receipt.get_location_display }}{% if receipt.expiry_date %} · Label: {{ receipt.expiry_date }}{% endif %}</p>
+  </div></article>
+  {% empty %}<p class="empty">No purchases yet. Use “Put away” on your shopping list to get started.</p>{% endfor %}
+</section>
+{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Previous</a>{% endif %}
+{% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next</a>{% endif %}
+{% endblock %}

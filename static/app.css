@@ -13,3 +13,5 @@
 .food-row{display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--line);padding:14px 0;color:var(--ink);text-decoration:none}.food-row:last-of-type{margin-bottom:20px}.food-row small{display:block;color:var(--muted);font-size:12px}.food-row .badge{margin-left:auto}.date-tile{font-size:10px;text-align:center;min-width:40px;background:var(--lime);border-radius:9px;padding:6px}.date-tile strong{display:block;font-size:20px}.kitchen-note{display:flex;align-items:center;gap:25px;background:#e8eedd;border-radius:18px;padding:26px;margin-top:25px}.kitchen-note h2{font-size:25px;margin:5px 0 10px}.kitchen-note p:last-child{margin:0;font-size:14px;color:var(--muted)}
 
 nav a[aria-current=page]{color:var(--green);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+
+.shopping-name{flex:1;min-width:0;overflow-wrap:anywhere}.shopping-row{flex-wrap:wrap}.purchase-form button{min-height:48px}.purchase-form input,.purchase-form select{font-size:1rem}@media(max-width:600px){.purchase-form button{width:100%}.shopping-row .button{margin-left:auto;white-space:nowrap}}

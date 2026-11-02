@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Put away {{ entry.name }} · PantryKind{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a href="{% url 'shopping' %}">← Shopping list</a>
+  <p class="eyebrow">From your bag to your pantry</p><h1>Put away {{ entry.name }}</h1>
+  <p class="muted">{{ entry|quantity }} on the list. Bought less? Enter what you brought home and leave the rest for later.</p>
+  <form method="post" class="card purchase-form">{% csrf_token %}{{ form.as_p }}
+    <p class="muted">Each purchase gets its own batch and label date. Follow the food packaging instructions.</p>
+    <button>Save purchase &amp; add to pantry</button>
+  </form>
+</div>
+{% endblock %}

@@ -138,3 +138,19 @@ class MealPlanForm(forms.ModelForm):
     def __init__(self, *args, household, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["recipe"].queryset = Recipe.objects.filter(household=household)
+
+
+class PurchaseForm(StockActionForm):
+    from pantry.models import CATEGORIES, LOCATIONS
+
+    expiry_date = forms.DateField(
+        required=False, widget=forms.DateInput(attrs={"type": "date"}), label="Date on the label"
+    )
+    location = forms.ChoiceField(choices=LOCATIONS, initial="pantry")
+    category = forms.ChoiceField(choices=CATEGORIES, initial="other")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("note")
+        self.fields["amount"].label = "Quantity bought"
+        self.fields["amount"].widget.attrs.update({"inputmode": "decimal", "autofocus": True})

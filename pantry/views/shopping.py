@@ -110,3 +110,38 @@ def add_low_stock(request):
                 count += 1
     messages.success(request, f"Updated {count} shopping entries from low stock.")
     return redirect("shopping")
+
+
+@household_required
+@household_write
+@require_http_methods(["GET", "POST"])
+def purchase(request, pk):
+    from django.core.exceptions import ValidationError
+    from pantry.forms import PurchaseForm
+    from pantry.services import purchase_shopping
+
+    entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
+    form = PurchaseForm(request.POST or None, initial={"amount": entry.quantity})
+    if request.method == "POST" and form.is_valid():
+        try:
+            receipt = purchase_shopping(
+                household=request.household, entry_id=pk, actor=request.user, **form.cleaned_data
+            )
+        except ValidationError as error:
+            form.add_error(None, error)
+        else:
+            messages.success(request, "Purchase saved. A new batch is now in your pantry.")
+            if receipt.item_id:
+                return redirect("item_detail", pk=receipt.item_id)
+            return redirect("shopping_purchases")
+    return render(request, "shopping/purchase.html", {"entry": entry, "form": form})
+
+
+@household_required
+def purchases(request):
+    from django.core.paginator import Paginator
+    from pantry.models import PurchaseReceipt
+
+    receipts = PurchaseReceipt.objects.filter(household=request.household).select_related("actor")
+    page = Paginator(receipts, 30).get_page(request.GET.get("page"))
+    return render(request, "shopping/purchases.html", {"page": page})
