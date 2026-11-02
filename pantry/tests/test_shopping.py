@@ -35,3 +35,15 @@ class ShoppingClearTests(ShoppingTests):
         ShoppingEntry.objects.create(household=other,name='Foreign',checked=True)
         self.client.post('/shopping/clear-checked/')
         self.assertEqual(set(ShoppingEntry.objects.values_list('name',flat=True)),{'Open','Foreign'})
+
+class LowStockTests(ShoppingTests):
+    def test_multiple_batches_count_towards_one_target(self):
+        from pantry.models import Item
+        Item.objects.create(household=self.home,name='Rice',quantity=1,unit='kg',low_stock_at=2)
+        Item.objects.create(household=self.home,name='rice',quantity=2,unit='kg',low_stock_at=2)
+        self.client.post('/shopping/low-stock/');self.assertFalse(ShoppingEntry.objects.exists())
+    def test_repeated_suggestion_does_not_inflate_list(self):
+        from pantry.models import Item
+        Item.objects.create(household=self.home,name='Rice',quantity=1,unit='kg',low_stock_at=3)
+        self.client.post('/shopping/low-stock/');self.client.post('/shopping/low-stock/')
+        self.assertEqual(ShoppingEntry.objects.get().quantity,2)

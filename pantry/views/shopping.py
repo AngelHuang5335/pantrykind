@@ -63,14 +63,21 @@ def add_low_stock(request):
     from django.db.models import F
     from decimal import Decimal
     from django.db import transaction
+    from pantry.normalization import food_key
     with transaction.atomic():
-        items=Item.objects.filter(household=request.household,archived=False,low_stock_at__gt=0,quantity__lte=F('low_stock_at'))
-        count=0
+        items=Item.objects.filter(household=request.household,archived=False)
+        totals={}
         for item in items:
-            # Repeated clicks fill the gap to a target instead of adding the target again.
-            needed=max(item.low_stock_at-item.quantity,Decimal('0'))
-            if needed<=0:continue
-            current=ShoppingEntry.objects.filter(household=request.household,normalized_name=__import__('pantry.normalization',fromlist=['food_key']).food_key(item.name),unit=item.unit,checked=False).first()
+            key=(food_key(item.name),item.unit)
+            group=totals.setdefault(key,{'name':item.name,'quantity':Decimal('0'),'target':Decimal('0')})
+            group['quantity']+=item.quantity
+            group['target']=max(group['target'],item.low_stock_at)
+        count=0
+        for (name_key,unit),group in totals.items():
+            needed=max(group['target']-group['quantity'],Decimal('0'))
+            current=ShoppingEntry.objects.filter(household=request.household,normalized_name=name_key,unit=unit,checked=False).first()
             missing=needed-(current.quantity if current else 0)
-            if missing>0:add_to_shopping(request.household,item.name,missing,item.unit);count+=1
+            if missing>0:
+                add_to_shopping(request.household,group['name'],missing,unit)
+                count+=1
     messages.success(request,f'Updated {count} shopping entries from low stock.');return redirect('shopping')
