@@ -14,6 +14,16 @@
 
 </div>
 
+![PantryKind kitchen overview](docs/screenshots/dashboard.png)
+
+<details><summary>See the recipe notebook and mobile layout</summary>
+
+![Recipe notebook](docs/screenshots/recipes.png)
+
+<img src="docs/screenshots/mobile.png" width="320" alt="PantryKind dashboard at a phone width">
+
+</details>
+
 ## A calmer kitchen, one meal at a time
 
 You buy spinach. It disappears behind a jar. You buy it again.
