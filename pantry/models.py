@@ -31,6 +31,7 @@ class Item(models.Model):
     unit=models.CharField(max_length=8,choices=UNITS,default='pcs')
     expiry_date=models.DateField(null=True,blank=True)
     notes=models.TextField(blank=True,max_length=1000)
+    low_stock_at=models.DecimalField(max_digits=12,decimal_places=3,default=0,validators=[MinValueValidator(Decimal('0'))])
     archived=models.BooleanField(default=False)
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)

@@ -19,6 +19,7 @@ def index(request):
     if status=='soon':items=items.filter(expiry_date__range=(today,today+timedelta(days=7)),quantity__gt=0)
     elif status=='past':items=items.filter(expiry_date__lt=today,quantity__gt=0)
     elif status=='undated':items=items.filter(expiry_date__isnull=True)
+    elif status=='low':items=items.filter(low_stock_at__gt=0,quantity__lte=F('low_stock_at'))
     category=request.GET.get('category','')
     if category in dict(CATEGORIES):items=items.filter(category=category)
     location=request.GET.get('location','')
