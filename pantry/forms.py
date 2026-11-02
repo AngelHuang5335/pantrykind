@@ -21,3 +21,11 @@ class StockActionForm(forms.Form):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['request_id'].initial=uuid.uuid4()
+
+from pantry.models import ShoppingEntry
+class ShoppingForm(forms.ModelForm):
+    class Meta:model=ShoppingEntry;fields=['name','quantity','unit']
+    def clean_name(self):
+        name=self.cleaned_data['name'].strip()
+        if not name:raise forms.ValidationError('Enter a shopping item.')
+        return name

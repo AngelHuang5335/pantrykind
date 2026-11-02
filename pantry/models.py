@@ -63,3 +63,14 @@ class StockEvent(models.Model):
     class Meta:
         ordering=['-created_at','-pk']
         constraints=[models.CheckConstraint(condition=models.Q(amount__gt=0),name='positive_stock_event')]
+
+class ShoppingEntry(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='shopping_entries')
+    name=models.CharField(max_length=120)
+    quantity=models.DecimalField(max_digits=12,decimal_places=3,default=1,validators=[MinValueValidator(Decimal('.001'))])
+    unit=models.CharField(max_length=8,choices=UNITS,default='pcs')
+    checked=models.BooleanField(default=False)
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering=['checked','name','pk']
+        constraints=[models.CheckConstraint(condition=models.Q(quantity__gt=0),name='positive_shopping_quantity')]
