@@ -43,3 +43,20 @@ def detail(request,pk):
     from pantry.matching import match_recipe
     matches=match_recipe(recipe)
     return render(request,'recipes/detail.html',{'recipe':recipe,'matches':matches,'ready':bool(matches) and all(m['ready'] for m in matches)})
+
+@household_required
+@require_POST
+def shop_missing(request,pk):
+    from pantry.matching import match_recipe
+    from pantry.services import add_to_shopping
+    from pantry.models import ShoppingEntry
+    from pantry.normalization import food_key
+    from decimal import Decimal,ROUND_UP
+    recipe=get_object_or_404(Recipe,pk=pk,household=request.household)
+    with transaction.atomic():
+        for match in match_recipe(recipe):
+            missing=match['missing'].quantize(Decimal('.001'),rounding=ROUND_UP)
+            current=ShoppingEntry.objects.filter(household=request.household,normalized_name=food_key(match['name']),unit=match['unit'],checked=False).first()
+            gap=missing-(current.quantity if current else 0)
+            if gap>0:add_to_shopping(request.household,match['name'],gap,match['unit'])
+    messages.success(request,'Added only the missing quantities to your list.');return redirect('shopping')
