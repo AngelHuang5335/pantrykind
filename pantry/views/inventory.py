@@ -82,3 +82,14 @@ def archive(request,pk):
     item.archived=not item.archived;item.save(update_fields=['archived','updated_at'])
     messages.success(request,'Item archived.' if item.archived else 'Item restored.')
     return redirect('item_detail',pk=pk)
+
+@household_required
+@require_http_methods(['GET','POST'])
+def duplicate(request,pk):
+    source=get_object_or_404(Item,pk=pk,household=request.household)
+    initial={field:getattr(source,field) for field in ['name','category','location','unit','low_stock_at']}
+    form=ItemForm(request.POST or None,initial=initial)
+    if request.method=='POST' and form.is_valid():
+        item=form.save(commit=False);item.household=request.household;item.save()
+        messages.success(request,'New batch added with its own date.');return redirect('item_detail',pk=item.pk)
+    return render(request,'inventory/form.html',{'form':form,'heading':'Add another batch'})
