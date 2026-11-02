@@ -47,13 +47,9 @@ TEMPLATES = [
     }
 ]
 WSGI_APPLICATION = "config.wsgi.application"
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": Path(os.environ.get("DATABASE_PATH", BASE_DIR / "db.sqlite3")),
-        "OPTIONS": {"timeout": 20},
-    }
-}
+from config.database import database_config
+
+DATABASES = {"default": database_config(os.environ, BASE_DIR)}
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
