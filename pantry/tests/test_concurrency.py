@@ -11,6 +11,10 @@ from django.test import TransactionTestCase
 
 from pantry.models import CookLog, Ingredient, Item, Recipe, ShoppingEntry, StockEvent
 from pantry.services import add_to_shopping, cook_recipe, record_stock
+from pantry.services import purchase_shopping
+from pantry.models import PurchaseReceipt, ReminderJob, ReminderSubscription
+from pantry.worker import claim_job
+from django.utils import timezone
 from pantry.tests.factories import kitchen
 
 
@@ -84,3 +88,33 @@ class ConcurrentKitchenTests(TransactionTestCase):
     def test_parallel_shopping_additions_merge_without_lost_updates(self):
         self.race(lambda: add_to_shopping(self.home, "Rice", 1, "kg").pk)
         self.assertEqual(ShoppingEntry.objects.get().quantity, 2)
+
+    def test_identical_purchase_requests_return_one_batch(self):
+        entry = add_to_shopping(self.home, "Oats", 1, "pack")
+        key = uuid4()
+        result = self.race(
+            lambda: (
+                purchase_shopping(
+                    household=self.home,
+                    actor=self.user,
+                    entry_id=entry.pk,
+                    amount=1,
+                    request_id=key,
+                ).pk
+            )
+        )
+        self.assertEqual(result[0], result[1])
+        self.assertNotIn("rejected", result)
+        self.assertEqual(PurchaseReceipt.objects.count(), 1)
+
+    def test_parallel_workers_cannot_claim_the_same_job(self):
+        member = self.home.memberships.get()
+        ReminderSubscription.objects.create(membership=member, enabled=True)
+        ReminderJob.objects.create(membership=member, local_date=timezone.localdate())
+
+        def claim():
+            job = claim_job()
+            return str(job.lease_token) if job else None
+
+        result = self.race(claim)
+        self.assertEqual(result.count(None), 1)

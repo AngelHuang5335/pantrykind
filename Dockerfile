@@ -1,8 +1,10 @@
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 BIND_HOST=0.0.0.0 DATABASE_PATH=/data/pantry.sqlite3 DEBUG=false
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt && useradd --create-home --uid 10001 pantry && mkdir /data && chown pantry:pantry /data
+ARG WITH_POSTGRES=false
+COPY requirements.txt requirements-postgres.txt ./
+RUN if [ "$WITH_POSTGRES" = "true" ]; then pip install --no-cache-dir -r requirements-postgres.txt; else pip install --no-cache-dir -r requirements.txt; fi \
+    && useradd --create-home --uid 10001 pantry && mkdir /data && chown pantry:pantry /data
 COPY --chown=pantry:pantry . .
 USER pantry
 RUN DEBUG=true python manage.py collectstatic --noinput
