@@ -16,7 +16,7 @@
 - Mobile purchase and inbox screens, existing-Chrome workflow evidence, and
   separate Playwright/PostgreSQL CI jobs with browser traces.
 
-Local validation: 126 tests pass; six PostgreSQL-only races skip on SQLite.
+Local validation: 130 tests pass; six PostgreSQL-only races skip on SQLite.
 Production checks, real-browser smoke flows and the restore drill pass.
 PostgreSQL execution, the portable Playwright suite and Docker builds await an
 environment with the required services/dependencies; see [validation](docs/VALIDATION.md).

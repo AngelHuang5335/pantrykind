@@ -1,5 +1,7 @@
 from pantry.locking import household_write
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 from pantry.access import household_required
@@ -14,9 +16,13 @@ from pantry.services import add_to_shopping
 def index(request):
     form = ShoppingForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        add_to_shopping(request.household, **form.cleaned_data)
-        messages.success(request, "Added to your shopping list.")
-        return redirect("shopping")
+        try:
+            add_to_shopping(request.household, **form.cleaned_data)
+        except ValidationError as error:
+            form.add_error(None, error)
+        else:
+            messages.success(request, "Added to your shopping list.")
+            return redirect("shopping")
     entries = ShoppingEntry.objects.filter(household=request.household)
     return render(request, "shopping/index.html", {"form": form, "entries": entries})
 
@@ -26,15 +32,16 @@ def index(request):
 @require_POST
 def toggle(request, pk):
     entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
-    if entry.checked:
-        from django.db import transaction
-
+    try:
         with transaction.atomic():
-            add_to_shopping(request.household, entry.name, entry.quantity, entry.unit)
-            entry.delete()
-    else:
-        entry.checked = True
-        entry.save(update_fields=["checked"])
+            if entry.checked:
+                add_to_shopping(request.household, entry.name, entry.quantity, entry.unit)
+                entry.delete()
+            else:
+                entry.checked = True
+                entry.save(update_fields=["checked"])
+    except ValidationError as error:
+        messages.error(request, " ".join(error.messages))
     return redirect("shopping")
 
 
@@ -45,15 +52,17 @@ def edit(request, pk):
     entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
     form = ShoppingForm(request.POST or None, instance=entry)
     if request.method == "POST" and form.is_valid():
-        from django.db import transaction
-
-        with transaction.atomic():
-            if entry.checked:
-                form.save()
-            else:
-                entry.delete()
-                add_to_shopping(request.household, **form.cleaned_data)
-        return redirect("shopping")
+        try:
+            with transaction.atomic():
+                if entry.checked:
+                    form.save()
+                else:
+                    ShoppingEntry.objects.filter(pk=entry.pk).delete()
+                    add_to_shopping(request.household, **form.cleaned_data)
+        except ValidationError as error:
+            form.add_error(None, error)
+        else:
+            return redirect("shopping")
     return render(request, "shopping/edit.html", {"form": form, "entry": entry})
 
 

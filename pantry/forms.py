@@ -1,11 +1,15 @@
 from django import forms
 from pantry.models import Item
+from pantry.quantities import MAX_QUANTITY
 
 
 class ItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["low_stock_at"].required = False
+        from django.core.validators import MaxValueValidator
+
+        self.fields["low_stock_at"].validators.append(MaxValueValidator(MAX_QUANTITY))
 
     def clean_low_stock_at(self):
         from decimal import Decimal
@@ -63,6 +67,10 @@ from pantry.models import ShoppingEntry
 
 
 class ShoppingForm(forms.ModelForm):
+    quantity = forms.DecimalField(
+        min_value=Decimal(".001"), max_value=MAX_QUANTITY, max_digits=12, decimal_places=3
+    )
+
     class Meta:
         model = ShoppingEntry
         fields = ["name", "quantity", "unit"]

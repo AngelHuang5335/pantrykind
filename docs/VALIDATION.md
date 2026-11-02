@@ -20,8 +20,8 @@ lease recovery, stale-worker fencing, retry backoff, opt-out and private inboxes
 
 ## Local evidence for 0.2
 
-- Windows, Python 3.12.6 and Django 5.2.18: the default suite discovers 132 tests;
-  126 pass and six real PostgreSQL race tests are explicitly skipped on SQLite.
+- Windows, Python 3.12.6 and Django 5.2.18: the default suite discovers 136 tests;
+  130 pass and six real PostgreSQL race tests are explicitly skipped on SQLite.
 - Ruff lint/format, migration drift checks, static collection and Django system
   checks pass. A fresh-secret production smoke check verifies HTTPS responses,
   authenticated dashboard and `check --deploy`.
