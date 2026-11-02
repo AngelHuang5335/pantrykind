@@ -99,3 +99,5 @@ urlpatterns += [path('data/pantry.csv', transfers.export_inventory, name='invent
 urlpatterns += [path('data/shopping.csv', transfers.export_shopping, name='shopping_export')]
 
 urlpatterns += [path('data/import/', transfers.import_inventory, name='inventory_import')]
+
+urlpatterns += [path('data/import/confirm/', transfers.confirm_import, name='inventory_import_confirm')]
