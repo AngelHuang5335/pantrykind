@@ -65,3 +65,9 @@ urlpatterns += [path('households/invite/', households.invite, name='household_in
 urlpatterns += [path('join/<str:token>/', households.accept, name='invitation_accept')]
 
 urlpatterns += [path('households/invitations/<int:pk>/revoke/', households.revoke, name='invitation_revoke')]
+
+urlpatterns += [path('households/members/<int:pk>/remove/', households.remove_member, name='member_remove')]
+
+urlpatterns += [path('households/members/<int:pk>/transfer/', households.transfer, name='member_transfer')]
+
+urlpatterns += [path('households/leave/', households.leave, name='household_leave')]

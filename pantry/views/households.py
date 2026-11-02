@@ -86,3 +86,34 @@ def revoke(request,pk):
     if request.membership.role!='owner':return HttpResponseForbidden('Only the owner can revoke invitations.')
     get_object_or_404(Invitation,pk=pk,household=request.household).delete()
     messages.success(request,'Invitation revoked.');return redirect('household_settings')
+
+@household_required
+@require_POST
+def remove_member(request,pk):
+    if request.membership.role!='owner':return HttpResponseForbidden('Only the owner can remove members.')
+    member=get_object_or_404(Membership,pk=pk,household=request.household)
+    if member.role=='owner':messages.error(request,'The owner cannot be removed.')
+    else:member.delete();messages.success(request,'Member removed.')
+    return redirect('household_settings')
+
+@household_required
+@require_POST
+def leave(request):
+    if request.membership.role=='owner':
+        messages.error(request,'Transfer ownership before leaving this kitchen.');return redirect('household_settings')
+    request.membership.delete();request.session.pop('household_id',None)
+    messages.success(request,'You have left this kitchen.');return redirect('dashboard')
+
+@household_required
+@require_POST
+def transfer(request,pk):
+    if request.membership.role!='owner':return HttpResponseForbidden('Only the owner can transfer ownership.')
+    with transaction.atomic():
+        members=Membership.objects.select_for_update().filter(household=request.household)
+        current=members.get(pk=request.membership.pk)
+        target=get_object_or_404(members,pk=pk)
+        if current.role!='owner':return HttpResponseForbidden('Ownership has changed. Reload and try again.')
+        if target.pk!=current.pk:
+            current.role='member';current.save(update_fields=['role'])
+            target.role='owner';target.save(update_fields=['role'])
+    messages.success(request,'Kitchen ownership transferred.');return redirect('household_settings')
