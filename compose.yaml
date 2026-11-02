@@ -1,0 +1,17 @@
+services:
+  pantrykind:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file: .env
+    environment:
+      DEBUG: "false"
+      DATABASE_PATH: /data/pantry.sqlite3
+      BIND_HOST: 0.0.0.0
+    volumes:
+      - pantry-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  pantry-data:
