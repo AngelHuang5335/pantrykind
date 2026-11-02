@@ -107,3 +107,5 @@ from pantry.views import api
 urlpatterns += [path('api/v1/inventory/', api.inventory, name='api_inventory')]
 
 urlpatterns += [path('api/v1/shopping/', api.shopping, name='api_shopping')]
+
+urlpatterns += [path('healthz/', home.health, name='health')]
