@@ -4,7 +4,7 @@ WORKDIR /app
 ARG WITH_POSTGRES=false
 COPY requirements.txt requirements-postgres.txt ./
 RUN if [ "$WITH_POSTGRES" = "true" ]; then pip install --no-cache-dir -r requirements-postgres.txt; else pip install --no-cache-dir -r requirements.txt; fi \
-    && useradd --create-home --uid 10001 pantry && mkdir /data && chown pantry:pantry /data
+    && useradd --create-home --uid 10001 pantry && mkdir /data && chown pantry:pantry /app /data
 COPY --chown=pantry:pantry . .
 USER pantry
 RUN DEBUG=true python manage.py collectstatic --noinput
