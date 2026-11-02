@@ -53,3 +53,12 @@ Ingredients=inlineformset_factory(Recipe,Ingredient,fields=['name','quantity','u
 
 class ServingsForm(forms.Form):
     servings=forms.IntegerField(min_value=1,max_value=50)
+
+from pantry.models import MealPlan
+class MealPlanForm(forms.ModelForm):
+    class Meta:
+        model=MealPlan;fields=['recipe','date','slot','servings']
+        widgets={'date':forms.DateInput(attrs={'type':'date'})}
+    def __init__(self,*args,household,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.fields['recipe'].queryset=Recipe.objects.filter(household=household)

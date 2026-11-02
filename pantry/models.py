@@ -118,3 +118,12 @@ class Invitation(models.Model):
     expires_at=models.DateTimeField()
     used_at=models.DateTimeField(null=True,blank=True)
     created_at=models.DateTimeField(auto_now_add=True)
+
+class MealPlan(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='meal_plans')
+    recipe=models.ForeignKey(Recipe,on_delete=models.CASCADE,related_name='plans')
+    date=models.DateField()
+    slot=models.CharField(max_length=10,choices=[('breakfast','Breakfast'),('lunch','Lunch'),('dinner','Dinner')],default='dinner')
+    servings=models.PositiveSmallIntegerField(default=2,validators=[MinValueValidator(1),MaxValueValidator(50)])
+    cooked=models.ForeignKey(CookLog,on_delete=models.SET_NULL,null=True,blank=True)
+    class Meta:ordering=['date','slot','pk']
