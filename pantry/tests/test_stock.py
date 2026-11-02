@@ -23,3 +23,14 @@ class StockTests(TestCase):
     def test_foreign_household_is_rejected(self):
         user,other=kitchen('other')
         with self.assertRaises(Item.DoesNotExist):record_stock(household=other,item_id=self.item.pk,actor=user,kind='used',amount=1,request_id=uuid4())
+
+class StockActionViewTests(TestCase):
+    def setUp(self):
+        self.user,self.home=kitchen();self.client.force_login(self.user)
+        self.item=Item.objects.create(household=self.home,name='Oats',quantity=2)
+    def test_get_never_consumes_stock(self):
+        self.client.get(f'/pantry/{self.item.pk}/action/used/')
+        self.item.refresh_from_db();self.assertEqual(self.item.quantity,2)
+    def test_action_form_records_usage(self):
+        self.client.post(f'/pantry/{self.item.pk}/action/used/',{'amount':'1','request_id':str(uuid4())})
+        self.item.refresh_from_db();self.assertEqual(self.item.quantity,1)

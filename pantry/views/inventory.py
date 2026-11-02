@@ -50,3 +50,24 @@ def detail(request,pk):
     item=get_object_or_404(Item,pk=pk,household=request.household)
     events=item.events.select_related('actor')[:50]
     return render(request,'inventory/detail.html',{'item':item,'events':events})
+
+from django.core.exceptions import ValidationError
+from django.http import Http404
+from pantry.forms import StockActionForm
+from pantry.services import record_stock
+STOCK_ACTIONS={'used':'Use some'}
+
+@household_required
+@require_http_methods(['GET','POST'])
+def stock_action(request,pk,kind):
+    if kind not in STOCK_ACTIONS:raise Http404
+    item=get_object_or_404(Item,pk=pk,household=request.household,archived=False)
+    form=StockActionForm(request.POST or None,initial={'amount':item.quantity})
+    if request.method=='POST' and form.is_valid():
+        try:
+            record_stock(household=request.household,item_id=item.pk,actor=request.user,kind=kind,**form.cleaned_data)
+        except ValidationError as error:form.add_error(None,error)
+        else:
+            messages.success(request,'Stock movement recorded.')
+            return redirect('item_detail',pk=item.pk)
+    return render(request,'inventory/action.html',{'form':form,'item':item,'heading':STOCK_ACTIONS[kind]})
