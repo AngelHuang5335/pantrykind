@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pantry", "0009_household_reminder_days_household_timezone_name"),
     ]

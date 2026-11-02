@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pantry", "0004_item_low_stock_at"),
     ]
@@ -32,9 +31,7 @@ class Migration(migrations.Migration):
                         decimal_places=3,
                         default=1,
                         max_digits=12,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.001"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.001"))],
                     ),
                 ),
                 (

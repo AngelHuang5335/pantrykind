@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pantry", "0006_shoppingentry_normalized_name_and_more"),
     ]
@@ -80,9 +79,7 @@ class Migration(migrations.Migration):
                     models.DecimalField(
                         decimal_places=3,
                         max_digits=12,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.001"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.001"))],
                     ),
                 ),
                 (

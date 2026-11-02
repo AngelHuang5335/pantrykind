@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pantry", "0001_initial"),
     ]
@@ -62,9 +61,7 @@ class Migration(migrations.Migration):
                         max_digits=12,
                         validators=[
                             django.core.validators.MinValueValidator(Decimal("0")),
-                            django.core.validators.MaxValueValidator(
-                                Decimal("999999999")
-                            ),
+                            django.core.validators.MaxValueValidator(Decimal("999999999")),
                         ],
                     ),
                 ),
