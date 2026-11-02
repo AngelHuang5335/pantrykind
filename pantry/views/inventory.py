@@ -3,12 +3,23 @@ from django.shortcuts import get_object_or_404,redirect,render
 from django.views.decorators.http import require_http_methods
 from pantry.access import household_required
 from pantry.forms import ItemForm
-from pantry.models import Item
+from pantry.models import Item,CATEGORIES,LOCATIONS
+from django.db.models import Q,F
+from django.core.paginator import Paginator
+from django.utils import timezone
+from datetime import timedelta
 
 @household_required
 def index(request):
     items=Item.objects.filter(household=request.household,archived=False)
-    return render(request,'inventory/index.html',{'items':items})
+    query=request.GET.get('q','').strip()[:120]
+    if query:items=items.filter(Q(name__icontains=query)|Q(notes__icontains=query))
+    category=request.GET.get('category','')
+    if category in dict(CATEGORIES):items=items.filter(category=category)
+    location=request.GET.get('location','')
+    if location in dict(LOCATIONS):items=items.filter(location=location)
+    page=Paginator(items.order_by(F('expiry_date').asc(nulls_last=True),'name','pk'),24).get_page(request.GET.get('page'))
+    return render(request,'inventory/index.html',{'items':page,'page':page,'query':query,'category':category,'location':location,'categories':CATEGORIES,'locations':LOCATIONS})
 
 @household_required
 @require_http_methods(['GET','POST'])
