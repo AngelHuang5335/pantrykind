@@ -81,3 +81,5 @@ urlpatterns += [path('plan/', planner.index, name='planner')]
 urlpatterns += [path('plan/<int:pk>/edit/', planner.edit, name='plan_edit')]
 
 urlpatterns += [path('plan/<int:pk>/delete/', planner.delete, name='plan_delete')]
+
+urlpatterns += [path('plan/<int:pk>/cook/', planner.cook, name='plan_cook')]

@@ -35,3 +35,20 @@ def edit(request,pk):
 def delete(request,pk):
     get_object_or_404(MealPlan,pk=pk,household=request.household).delete()
     messages.success(request,'Meal removed from the calendar.');return redirect('planner')
+
+@household_required
+@require_POST
+def cook(request,pk):
+    import uuid
+    from django.db import transaction
+    from django.core.exceptions import ValidationError
+    from pantry.services import cook_recipe
+    try:
+        with transaction.atomic():
+            plan=get_object_or_404(MealPlan.objects.select_for_update(),pk=pk,household=request.household)
+            if not plan.cooked:
+                plan.cooked=cook_recipe(household=request.household,recipe_id=plan.recipe_id,actor=request.user,servings=plan.servings,request_id=uuid.uuid5(uuid.NAMESPACE_URL,f'pantrykind:plan:{plan.pk}:{plan.household_id}'))
+                plan.save(update_fields=['cooked'])
+    except ValidationError as error:messages.error(request,' '.join(error.messages))
+    else:messages.success(request,'Meal recorded. Your pantry is up to date.')
+    return redirect('planner')
