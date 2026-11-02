@@ -28,3 +28,24 @@ def toggle(request,pk):
     else:
         entry.checked=True;entry.save(update_fields=['checked'])
     return redirect('shopping')
+
+@household_required
+@require_http_methods(['GET','POST'])
+def edit(request,pk):
+    entry=get_object_or_404(ShoppingEntry,pk=pk,household=request.household)
+    form=ShoppingForm(request.POST or None,instance=entry)
+    if request.method=='POST' and form.is_valid():
+        from django.db import transaction
+        with transaction.atomic():
+            if entry.checked:form.save()
+            else:
+                entry.delete()
+                add_to_shopping(request.household,**form.cleaned_data)
+        return redirect('shopping')
+    return render(request,'shopping/edit.html',{'form':form,'entry':entry})
+
+@household_required
+@require_POST
+def delete(request,pk):
+    get_object_or_404(ShoppingEntry,pk=pk,household=request.household).delete()
+    messages.success(request,'Removed from your list.');return redirect('shopping')

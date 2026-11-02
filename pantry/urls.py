@@ -31,3 +31,7 @@ from pantry.views import shopping
 urlpatterns += [path('shopping/', shopping.index, name='shopping')]
 
 urlpatterns += [path('shopping/<int:pk>/toggle/', shopping.toggle, name='shopping_toggle')]
+
+urlpatterns += [path('shopping/<int:pk>/edit/', shopping.edit, name='shopping_edit')]
+
+urlpatterns += [path('shopping/<int:pk>/delete/', shopping.delete, name='shopping_delete')]
