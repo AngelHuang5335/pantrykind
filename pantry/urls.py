@@ -37,3 +37,5 @@ urlpatterns += [path('shopping/<int:pk>/edit/', shopping.edit, name='shopping_ed
 urlpatterns += [path('shopping/<int:pk>/delete/', shopping.delete, name='shopping_delete')]
 
 urlpatterns += [path('shopping/clear-checked/', shopping.clear_checked, name='shopping_clear_checked')]
+
+urlpatterns += [path('shopping/low-stock/', shopping.add_low_stock, name='shopping_low_stock')]
