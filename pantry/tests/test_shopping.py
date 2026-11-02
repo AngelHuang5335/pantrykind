@@ -26,3 +26,12 @@ class ShoppingToggleTests(ShoppingTests):
         new=ShoppingEntry.objects.create(household=self.home,name='oats',quantity=2)
         self.client.post(f'/shopping/{old.pk}/toggle/')
         new.refresh_from_db();self.assertEqual(new.quantity,3);self.assertEqual(ShoppingEntry.objects.count(),1)
+
+class ShoppingClearTests(ShoppingTests):
+    def test_clear_keeps_open_and_foreign_entries(self):
+        _,other=kitchen('other')
+        ShoppingEntry.objects.create(household=self.home,name='Open')
+        ShoppingEntry.objects.create(household=self.home,name='Done',checked=True)
+        ShoppingEntry.objects.create(household=other,name='Foreign',checked=True)
+        self.client.post('/shopping/clear-checked/')
+        self.assertEqual(set(ShoppingEntry.objects.values_list('name',flat=True)),{'Open','Foreign'})

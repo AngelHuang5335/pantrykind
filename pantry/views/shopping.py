@@ -49,3 +49,9 @@ def edit(request,pk):
 def delete(request,pk):
     get_object_or_404(ShoppingEntry,pk=pk,household=request.household).delete()
     messages.success(request,'Removed from your list.');return redirect('shopping')
+
+@household_required
+@require_POST
+def clear_checked(request):
+    count,_=ShoppingEntry.objects.filter(household=request.household,checked=True).delete()
+    messages.success(request,f'Cleared {count} checked entries.');return redirect('shopping')
