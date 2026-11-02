@@ -1,3 +1,4 @@
+from pantry.locking import household_write
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -48,6 +49,7 @@ class PreferencesForm(forms.ModelForm):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def settings(request):
     form = PreferencesForm(request.POST or None, instance=request.household)
@@ -93,6 +95,7 @@ from pantry.models import Invitation
 
 
 @household_required
+@household_write
 @require_POST
 def invite(request):
     if request.membership.role != "owner":
@@ -141,6 +144,7 @@ def accept(request, token):
 
 
 @household_required
+@household_write
 @require_POST
 def revoke(request, pk):
     if request.membership.role != "owner":
@@ -151,6 +155,7 @@ def revoke(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def remove_member(request, pk):
     if request.membership.role != "owner":
@@ -165,6 +170,7 @@ def remove_member(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def leave(request):
     if request.membership.role == "owner":
@@ -177,6 +183,7 @@ def leave(request):
 
 
 @household_required
+@household_write
 @require_POST
 def transfer(request, pk):
     if request.membership.role != "owner":

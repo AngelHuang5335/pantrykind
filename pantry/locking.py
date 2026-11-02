@@ -6,8 +6,9 @@ Call this inside transaction.atomic(), before reading mutable business state.
 """
 
 from django.core.exceptions import PermissionDenied
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import F
+from functools import wraps
 
 from pantry.models import Household, Membership
 
@@ -22,3 +23,20 @@ def lock_household(household, actor=None):
     ):
         raise PermissionDenied("You are no longer a member of this kitchen.")
     return home
+
+
+def household_write(view):
+    """Revalidate membership and acquire the parent lock before a POST reads rows."""
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if request.method != "POST":
+            return view(request, *args, **kwargs)
+        with transaction.atomic():
+            request.household = lock_household(request.household, request.user)
+            request.membership = Membership.objects.get(
+                household=request.household, user=request.user
+            )
+            return view(request, *args, **kwargs)
+
+    return wrapped

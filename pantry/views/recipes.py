@@ -1,3 +1,4 @@
+from pantry.locking import household_write
 from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -8,6 +9,7 @@ from pantry.models import Recipe
 
 
 @household_required
+@household_write
 def index(request):
     from pantry.matching import match_recipe
     from pantry.models import Item
@@ -45,6 +47,7 @@ def index(request):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def edit(request, pk=None):
     recipe = (
@@ -68,6 +71,7 @@ def edit(request, pk=None):
 
 
 @household_required
+@household_write
 def detail(request, pk):
     recipe = get_object_or_404(Recipe, pk=pk, household=request.household)
     from pantry.matching import match_recipe
@@ -91,6 +95,7 @@ def detail(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def shop_missing(request, pk):
     from pantry.matching import match_recipe
@@ -121,6 +126,7 @@ def shop_missing(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def cook(request, pk):
     import uuid
@@ -154,6 +160,7 @@ def cook(request, pk):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def delete(request, pk):
     recipe = get_object_or_404(Recipe, pk=pk, household=request.household)

@@ -1,3 +1,4 @@
+from pantry.locking import household_write
 from datetime import date, timedelta
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,6 +10,7 @@ from pantry.models import MealPlan
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def index(request):
     form = MealPlanForm(
@@ -54,6 +56,7 @@ def index(request):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def edit(request, pk):
     plan = get_object_or_404(MealPlan, pk=pk, household=request.household)
@@ -68,6 +71,7 @@ def edit(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def delete(request, pk):
     get_object_or_404(MealPlan, pk=pk, household=request.household).delete()
@@ -76,6 +80,7 @@ def delete(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def cook(request, pk):
     import uuid
@@ -111,6 +116,7 @@ def cook(request, pk):
 
 
 @household_required
+@household_write
 def export_calendar(request):
     from django.http import HttpResponse
     from pantry.calendar import calendar

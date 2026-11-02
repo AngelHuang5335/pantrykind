@@ -1,3 +1,4 @@
+from pantry.locking import household_write
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
@@ -8,6 +9,7 @@ from pantry.services import add_to_shopping
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def index(request):
     form = ShoppingForm(request.POST or None)
@@ -20,6 +22,7 @@ def index(request):
 
 
 @household_required
+@household_write
 @require_POST
 def toggle(request, pk):
     entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
@@ -36,6 +39,7 @@ def toggle(request, pk):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def edit(request, pk):
     entry = get_object_or_404(ShoppingEntry, pk=pk, household=request.household)
@@ -54,6 +58,7 @@ def edit(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def delete(request, pk):
     get_object_or_404(ShoppingEntry, pk=pk, household=request.household).delete()
@@ -62,6 +67,7 @@ def delete(request, pk):
 
 
 @household_required
+@household_write
 @require_POST
 def clear_checked(request):
     count, _ = ShoppingEntry.objects.filter(household=request.household, checked=True).delete()
@@ -70,6 +76,7 @@ def clear_checked(request):
 
 
 @household_required
+@household_write
 @require_POST
 def add_low_stock(request):
     from pantry.models import Item

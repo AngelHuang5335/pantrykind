@@ -1,3 +1,4 @@
+from pantry.locking import household_write
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
@@ -11,6 +12,7 @@ from datetime import timedelta
 
 
 @household_required
+@household_write
 def index(request):
     items = Item.objects.filter(
         household=request.household, archived=request.GET.get("status") == "archived"
@@ -60,6 +62,7 @@ def index(request):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def create(request):
     form = ItemForm(request.POST or None)
@@ -73,14 +76,25 @@ def create(request):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def edit(request, pk):
     item = get_object_or_404(Item, pk=pk, household=request.household)
     form = ItemForm(request.POST or None, instance=item)
+    from django import forms
+
+    form.fields["revision"] = forms.DateTimeField(
+        widget=forms.HiddenInput, initial=item.updated_at.isoformat()
+    )
     form.fields.pop("quantity")
     if item.events.exists():
         form.fields.pop("unit")
     if request.method == "POST" and form.is_valid():
+        if form.cleaned_data["revision"] != item.updated_at:
+            form.add_error(None, "This batch changed while you were editing. Reload before saving.")
+            return render(
+                request, "inventory/form.html", {"form": form, "heading": "Edit " + item.name}
+            )
         form.save()
         messages.success(request, "Item updated.")
         return redirect("inventory")
@@ -88,6 +102,7 @@ def edit(request, pk):
 
 
 @household_required
+@household_write
 def detail(request, pk):
     item = get_object_or_404(Item, pk=pk, household=request.household)
     events = item.events.select_related("actor")[:50]
@@ -107,6 +122,7 @@ STOCK_ACTIONS = {
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def stock_action(request, pk, kind):
     if kind not in STOCK_ACTIONS:
@@ -145,6 +161,7 @@ from django.views.decorators.http import require_POST
 
 
 @household_required
+@household_write
 @require_POST
 def archive(request, pk):
     item = get_object_or_404(Item, pk=pk, household=request.household)
@@ -155,6 +172,7 @@ def archive(request, pk):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def duplicate(request, pk):
     source = get_object_or_404(Item, pk=pk, household=request.household)

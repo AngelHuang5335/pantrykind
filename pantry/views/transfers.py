@@ -1,9 +1,11 @@
+from pantry.locking import household_write
 from pantry.access import household_required
 from pantry.models import Item, ShoppingEntry
 from pantry.csvio import FIELDS, csv_response
 
 
 @household_required
+@household_write
 def export_inventory(request):
     items = Item.objects.filter(household=request.household, archived=False).order_by("pk")
     return csv_response(
@@ -14,6 +16,7 @@ def export_inventory(request):
 
 
 @household_required
+@household_write
 def export_shopping(request):
     entries = ShoppingEntry.objects.filter(household=request.household, checked=False)
     return csv_response(
@@ -37,6 +40,7 @@ class ImportForm(forms.Form):
 
 
 @household_required
+@household_write
 @require_http_methods(["GET", "POST"])
 def import_inventory(request):
     form = ImportForm(request.POST or None, request.FILES or None)
@@ -68,6 +72,7 @@ from pantry.forms import ItemForm
 
 
 @household_required
+@household_write
 @require_POST
 def confirm_import(request):
     pending = request.session.get("pantry_import")
