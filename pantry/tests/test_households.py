@@ -17,3 +17,23 @@ class HouseholdTests(TestCase):
         session=self.client.session;session['household_id']=other.pk;session.save()
         response=self.client.get('/app/')
         self.assertEqual(response.wsgi_request.household,own)
+
+class InvitationTests(TestCase):
+    def test_invitation_is_single_use_and_not_consumed_by_preview(self):
+        from pantry.tests.factories import kitchen
+        from django.contrib.auth.models import User
+        from pantry.models import Invitation
+        owner,home=kitchen();self.client.force_login(owner)
+        self.client.post('/households/invite/')
+        url=self.client.session['pantry_invite_url']
+        guest=User.objects.create_user('guest',password='guest-long-pass-123');self.client.force_login(guest)
+        self.assertEqual(self.client.get(url).status_code,200)
+        self.assertFalse(Membership.objects.filter(user=guest).exists())
+        self.client.post(url);self.assertTrue(Membership.objects.filter(user=guest,household=home,role='member').exists())
+        self.assertEqual(self.client.get(url).status_code,404)
+    def test_member_cannot_invite_or_change_settings(self):
+        from pantry.tests.factories import kitchen
+        owner,home=kitchen();guest=User.objects.create_user('guest');Membership.objects.create(user=guest,household=home)
+        self.client.force_login(guest)
+        self.assertEqual(self.client.post('/households/invite/').status_code,403)
+        self.assertEqual(self.client.post('/households/settings/',{'name':'Hijacked','timezone_name':'UTC','reminder_days':7}).status_code,403)
