@@ -42,6 +42,8 @@ def create(request):
 def edit(request,pk):
     item=get_object_or_404(Item,pk=pk,household=request.household)
     form=ItemForm(request.POST or None,instance=item)
+    form.fields.pop('quantity')
+    if item.events.exists():form.fields.pop('unit')
     if request.method=='POST' and form.is_valid():
         form.save();messages.success(request,'Item updated.');return redirect('inventory')
     return render(request,'inventory/form.html',{'form':form,'heading':'Edit '+item.name})

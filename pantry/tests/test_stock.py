@@ -44,3 +44,10 @@ class WasteTests(TestCase):
         user,home=kitchen();self.client.force_login(user);item=Item.objects.create(household=home,name='Milk',quantity=1)
         response=self.client.post(f'/pantry/{item.pk}/action/wasted/',{'amount':1,'request_id':str(uuid4())})
         self.assertEqual(response.status_code,200);self.assertFalse(StockEvent.objects.exists())
+
+class LedgerIntegrityTests(TestCase):
+    def test_edit_cannot_silently_rewrite_stock_or_units(self):
+        user,home=kitchen();self.client.force_login(user);item=Item.objects.create(household=home,name='Rice',quantity=2,unit='kg')
+        record_stock(household=home,item_id=item.pk,actor=user,kind='used',amount=1,request_id=uuid4())
+        self.client.post(f'/pantry/{item.pk}/edit/',{'name':'Rice','category':'grains','location':'pantry','quantity':99,'unit':'g','low_stock_at':0})
+        item.refresh_from_db();self.assertEqual(item.quantity,1);self.assertEqual(item.unit,'kg')
