@@ -15,3 +15,16 @@ def index(request):
         messages.success(request,'Added to your shopping list.');return redirect('shopping')
     entries=ShoppingEntry.objects.filter(household=request.household)
     return render(request,'shopping/index.html',{'form':form,'entries':entries})
+
+@household_required
+@require_POST
+def toggle(request,pk):
+    entry=get_object_or_404(ShoppingEntry,pk=pk,household=request.household)
+    if entry.checked:
+        from django.db import transaction
+        with transaction.atomic():
+            add_to_shopping(request.household,entry.name,entry.quantity,entry.unit)
+            entry.delete()
+    else:
+        entry.checked=True;entry.save(update_fields=['checked'])
+    return redirect('shopping')

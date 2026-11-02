@@ -19,3 +19,10 @@ class ShoppingMergeTests(ShoppingTests):
         self.client.post('/shopping/',{'name':'Oats','quantity':1,'unit':'pack'})
         self.client.post('/shopping/',{'name':'Oats','quantity':2,'unit':'g'})
         self.assertEqual(ShoppingEntry.objects.count(),2)
+
+class ShoppingToggleTests(ShoppingTests):
+    def test_uncheck_merges_with_new_open_entry(self):
+        old=ShoppingEntry.objects.create(household=self.home,name='Oats',quantity=1,checked=True)
+        new=ShoppingEntry.objects.create(household=self.home,name='oats',quantity=2)
+        self.client.post(f'/shopping/{old.pk}/toggle/')
+        new.refresh_from_db();self.assertEqual(new.quantity,3);self.assertEqual(ShoppingEntry.objects.count(),1)
