@@ -16,11 +16,15 @@
 
 ![PantryKind kitchen overview](docs/screenshots/dashboard.png)
 
-<details><summary>See the recipe notebook and mobile layout</summary>
+<details><summary>See recipes, purchases, reminders and the mobile layout</summary>
 
 ![Recipe notebook](docs/screenshots/recipes.png)
 
 <img src="docs/screenshots/mobile.png" width="320" alt="PantryKind dashboard at a phone width">
+
+![Private kitchen inbox](docs/screenshots/inbox-desktop.png)
+
+<img src="docs/screenshots/purchase-mobile.png" width="320" alt="Partial purchase entry on a phone">
 
 </details>
 
@@ -36,10 +40,11 @@ PantryKind gives the food already in your kitchen a little visibility: which bat
 
 - **Know what is there:** dated batches, categories, storage locations, partial quantities, search and filters.
 - **Use it thoughtfully:** use-soon views, reversible archiving, consumption and waste records, and first-expiring batch deductions when you explicitly log a cooked meal.
-- **Shop once:** a shared checklist, duplicate merging, low-stock gaps, recipe missing ingredients, CSV export and a clean printed checklist.
+- **Shop once:** a shared checklist, duplicate merging, low-stock gaps and recipe missing ingredients. Put away partial purchases as new dated batches, with a purchase history and retry-safe stock ledger.
 - **Find dinner at home:** save your recipes, match compatible quantities, scale servings and filter ready-to-cook meals. Grams/kilograms and millilitres/litres convert; unknown pack sizes do not.
 - **Plan together:** weekly meals, calendar downloads, separate kitchens, expiring invitations and owner/member access.
-- **Keep control:** validated CSV preview/import, a read-only integration API, private SQLite backups and a local reminder command.
+- **Keep control:** validated CSV preview/import, a read-only integration API, verified SQLite backup/restore and optional PostgreSQL deployment.
+- **Get a gentle nudge:** opt-in daily inbox reminders in your kitchen's timezone, durable scheduling, crash recovery and bounded retries. No email service is required.
 
 This is a household organisation tool. Dates are copied from labels and are not a food-safety assessment. Insights show your recorded activity; they do not claim measured money, carbon or total waste savings.
 
@@ -71,7 +76,7 @@ Choose your own password when prompted. Sign in as `demo`. This creates an indep
 
 ## Everyday workflow
 
-1. Add purchased food as a batch with its unit, storage and optional label date.
+1. Add food as a batch, or choose **Shopping → Put away** to receive a full or partial purchase with its own label date.
 2. Open **Overview** to see items approaching their dates.
 3. Save a recipe using the same food names as your pantry. **Recipes → Ready with what I have** finds meals whose measured ingredients are on hand.
 4. Scale portions if needed. Add missing quantities to **Shopping**, or explicitly record cooking to update stock.
@@ -89,17 +94,21 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-SQLite data lives in a persistent volume. Do not delete that volume during upgrades. See [backup and restore](docs/BACKUPS.md). The current release is intended for small trusted households, not a public multi-tenant service.
+SQLite data lives in a persistent volume. Do not delete that volume during upgrades. See [backup and restore](docs/BACKUPS.md) and the optional [PostgreSQL deployment](docs/POSTGRESQL.md). The current release is intended for trusted households.
 
 ## Useful commands
 
 ```bash
 python manage.py pantry_digest 1
 python manage.py backup_pantry /private/backups/kitchen.sqlite3
+python manage.py verify_backup /private/backups/kitchen.sqlite3
+python manage.py enqueue_reminders
+python manage.py reminder_worker --limit 100
+python manage.py reminder_status
 python manage.py test --settings=config.test_settings
 ```
 
-Reminder output stays local. Connect it to your own scheduler or notification tool if desired. The project does not claim built-in push or email delivery. See [API](docs/API.md), [architecture](docs/ARCHITECTURE.md), [security](SECURITY.md) and [release notes](CHANGELOG.md).
+Schedule both reminder commands every minute for enabled users; delivery appears in the app's private **Inbox**. See [reminder operations](docs/REMINDERS.md). The manual `pantry_digest` remains a local text report. See also [API](docs/API.md), [architecture](docs/ARCHITECTURE.md), [security](SECURITY.md) and [release notes](CHANGELOG.md).
 
 ## Development
 
@@ -111,7 +120,9 @@ python manage.py makemigrations --check --dry-run
 python manage.py test --settings=config.test_settings
 ```
 
-The fast test settings use a weak password hasher **only for isolated tests**; production settings retain Django's normal password hashing. CI checks migrations, tests and static files on Python 3.12 and 3.13.
+The fast test settings use a weak password hasher **only for isolated tests**; production settings retain Django's normal password hashing. CI includes Python 3.12/3.13, PostgreSQL races, container builds and an opt-in [Playwright browser suite](docs/BROWSER-TESTS.md). [Validation notes](docs/VALIDATION.md) distinguish local evidence from configured CI checks.
+
+The recipe catalogue uses one stock index and three database queries, independent of recipe count. A reproducible synthetic benchmark compares 500 recipes and 2,000 batches; see [performance scope and results](docs/PERFORMANCE.md).
 
 ## Scope and limitations
 

@@ -31,7 +31,7 @@ Do not run `docker compose down -v` unless you intend to delete every account an
 
 `GET /healthz/` performs a database connection check and exposes only an ok/unavailable state. Run migrations before serving traffic. Back up before upgrading, inspect release notes, update dependencies and apply migrations once. Test restored data separately before switching production. The [backup guide](BACKUPS.md) covers sensitive data and restore order.
 
-Use `python manage.py pantry_digest HOUSEHOLD_ID` from your own scheduler for date reminders. The command prints text; it does not send email or push notifications. Protect scheduler output because it contains household food names.
+For opt-in daily inbox reminders, schedule `enqueue_reminders` and `reminder_worker` every minute; see [reminder operations](REMINDERS.md). The manual `pantry_digest HOUSEHOLD_ID` prints a private text report and is separate from inbox delivery. [PostgreSQL deployment](POSTGRESQL.md) provides an optional database server for shared installations.
 
 ## Environment reference
 
@@ -43,6 +43,7 @@ Use `python manage.py pantry_digest HOUSEHOLD_ID` from your own scheduler for da
 | `CSRF_TRUSTED_ORIGINS` | empty | Comma-separated HTTPS origins |
 | `HTTPS_ONLY` | true | Production HTTPS redirect |
 | `DATABASE_PATH` | db.sqlite3 | Persistent SQLite file |
+| `DATABASE_URL` | empty | PostgreSQL URL; unset DATABASE_PATH when using it |
 | `BIND_HOST` | 127.0.0.1 | Waitress bind address |
 | `PORT` | 8000 | Waitress port |
 | `THREADS` | 4 | Waitress thread count |

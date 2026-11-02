@@ -1,0 +1,24 @@
+{
+  "engine": "SQLite",
+  "mode": "online backup to new offline restore candidate",
+  "integrity_and_foreign_keys": "passed",
+  "row_comparison_tables": [
+    "auth_user",
+    "pantry_household",
+    "pantry_membership",
+    "pantry_item",
+    "pantry_stockevent",
+    "pantry_cooklog",
+    "pantry_purchasereceipt",
+    "pantry_reminderjob",
+    "pantry_notification"
+  ],
+  "migration_state": "current",
+  "restored_authentication_and_routes": "passed",
+  "counts": {
+    "households": 1,
+    "items": 10,
+    "migrations": 32
+  },
+  "live_database_overwritten": false
+}

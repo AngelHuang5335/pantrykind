@@ -1,8 +1,29 @@
 # Changelog
 
+## 0.2.0 — 2026-11-02
+
+- PostgreSQL URL configuration and an optional persistent Compose deployment.
+- Household-first write locking, active membership checks, stale-form protection,
+  cumulative stock limits and cooking retries checked after locking.
+- Full/partial shopping purchases create separate dated batches, stock events
+  and immutable receipts; replay remains safe after clearing the list.
+- Opt-in daily inbox reminders, local-time scheduling, deduplication, expiring
+  worker leases, fenced acknowledgements, bounded retries and dead-job recovery.
+- Read-only SQLite backup verification and restoration into a new offline candidate,
+  with a recorded account/business-data restore drill.
+- Shared recipe stock indexing, a three-query catalogue budget, pagination and
+  reproducible synthetic benchmark output.
+- Mobile purchase and inbox screens, existing-Chrome workflow evidence, and
+  separate Playwright/PostgreSQL CI jobs with browser traces.
+
+Local validation: 126 tests pass; six PostgreSQL-only races skip on SQLite.
+Production checks, real-browser smoke flows and the restore drill pass.
+PostgreSQL execution, the portable Playwright suite and Docker builds await an
+environment with the required services/dependencies; see [validation](docs/VALIDATION.md).
+
 ## 0.1.0 — 2026-11-02
 
-First public release of PantryKind, a self-hosted household pantry and meal-planning application.
+Initial implementation of PantryKind, a self-hosted household pantry and meal-planning application.
 
 ### Included
 
