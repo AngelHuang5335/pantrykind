@@ -55,7 +55,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 from pantry.forms import StockActionForm
 from pantry.services import record_stock
-STOCK_ACTIONS={'used':'Use some','restocked':'Top up this batch'}
+STOCK_ACTIONS={'used':'Use some','restocked':'Top up this batch','wasted':'Record discarded food'}
 
 @household_required
 @require_http_methods(['GET','POST'])
@@ -63,6 +63,7 @@ def stock_action(request,pk,kind):
     if kind not in STOCK_ACTIONS:raise Http404
     item=get_object_or_404(Item,pk=pk,household=request.household,archived=False)
     form=StockActionForm(request.POST or None,initial={'amount':item.quantity})
+    if kind=='wasted':form.fields['note'].required=True;form.fields['note'].help_text='What happened? For example: forgotten in the fridge, spoiled, or cooked too much.'
     if request.method=='POST' and form.is_valid():
         try:
             record_stock(household=request.household,item_id=item.pk,actor=request.user,kind=kind,**form.cleaned_data)

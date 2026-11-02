@@ -38,3 +38,9 @@ class StockActionViewTests(TestCase):
 class RestockTests(StockTests):
     def test_restock_increases_quantity(self):
         self.action('.5',kind='restocked');self.item.refresh_from_db();self.assertEqual(self.item.quantity,Decimal('2.500'))
+
+class WasteTests(TestCase):
+    def test_discard_requires_a_reason(self):
+        user,home=kitchen();self.client.force_login(user);item=Item.objects.create(household=home,name='Milk',quantity=1)
+        response=self.client.post(f'/pantry/{item.pk}/action/wasted/',{'amount':1,'request_id':str(uuid4())})
+        self.assertEqual(response.status_code,200);self.assertFalse(StockEvent.objects.exists())
