@@ -65,6 +65,7 @@ class StockEvent(models.Model):
         constraints=[models.CheckConstraint(condition=models.Q(amount__gt=0),name='positive_stock_event')]
 
 class ShoppingEntry(models.Model):
+    normalized_name=models.CharField(max_length=120,default='')
     household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='shopping_entries')
     name=models.CharField(max_length=120)
     quantity=models.DecimalField(max_digits=12,decimal_places=3,default=1,validators=[MinValueValidator(Decimal('.001'))])
@@ -73,4 +74,8 @@ class ShoppingEntry(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering=['checked','name','pk']
-        constraints=[models.CheckConstraint(condition=models.Q(quantity__gt=0),name='positive_shopping_quantity')]
+        constraints=[models.CheckConstraint(condition=models.Q(quantity__gt=0),name='positive_shopping_quantity'),models.UniqueConstraint(fields=['household','normalized_name','unit'],condition=models.Q(checked=False),name='unique_open_shopping_item')]
+    def save(self,*args,**kwargs):
+        from pantry.normalization import food_key
+        self.normalized_name=food_key(self.name)
+        super().save(*args,**kwargs)

@@ -24,3 +24,17 @@ def record_stock(*,household,item_id,actor,kind,amount,request_id,note=''):
     if not available.update(quantity=F('quantity')+delta,updated_at=timezone.now()):
         raise ValidationError('There is not enough of this batch left.')
     return StockEvent.objects.create(item=item,actor=actor,kind=kind,amount=amount,request_id=request_id,note=note[:200])
+
+from pantry.models import ShoppingEntry
+from pantry.normalization import food_key
+@transaction.atomic
+def add_to_shopping(household,name,quantity,unit):
+    quantity=Decimal(str(quantity))
+    if not quantity.is_finite() or quantity<=0:raise ValidationError('Enter a positive shopping quantity.')
+    name=name.strip()
+    if not name or len(name)>120 or unit not in dict(ShoppingEntry._meta.get_field('unit').choices):raise ValidationError('Invalid shopping item.')
+    entry,created=ShoppingEntry.objects.get_or_create(household=household,normalized_name=food_key(name),unit=unit,checked=False,defaults={'name':name,'quantity':quantity})
+    if not created:
+        if not ShoppingEntry.objects.filter(pk=entry.pk,quantity__lte=Decimal('999999999')-quantity).update(quantity=F('quantity')+quantity):raise ValidationError('Shopping quantity is too large.')
+        entry.refresh_from_db()
+    return entry
