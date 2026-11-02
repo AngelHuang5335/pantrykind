@@ -79,3 +79,23 @@ class ShoppingEntry(models.Model):
         from pantry.normalization import food_key
         self.normalized_name=food_key(self.name)
         super().save(*args,**kwargs)
+
+class Recipe(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='recipes')
+    title=models.CharField(max_length=120)
+    description=models.CharField(max_length=240,blank=True)
+    instructions=models.TextField(max_length=12000)
+    servings=models.PositiveSmallIntegerField(default=2,validators=[MinValueValidator(1),MaxValueValidator(50)])
+    minutes=models.PositiveSmallIntegerField(default=20,validators=[MinValueValidator(1),MaxValueValidator(1440)])
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:ordering=['title','pk']
+    def __str__(self):return self.title
+
+class Ingredient(models.Model):
+    recipe=models.ForeignKey(Recipe,on_delete=models.CASCADE,related_name='ingredients')
+    name=models.CharField(max_length=120)
+    quantity=models.DecimalField(max_digits=12,decimal_places=3,validators=[MinValueValidator(Decimal('.001'))])
+    unit=models.CharField(max_length=8,choices=UNITS,default='pcs')
+    class Meta:
+        ordering=['pk']
+        constraints=[models.CheckConstraint(condition=models.Q(quantity__gt=0),name='positive_ingredient_quantity')]
