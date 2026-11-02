@@ -38,3 +38,14 @@ class ImportViewTests(TestCase):
         pending=self.client.session['pantry_import'];pending['household_id']=999
         session=self.client.session;session['pantry_import']=pending;session.save()
         self.client.post('/data/import/confirm/',{'token':pending['token']});self.assertFalse(Item.objects.exists())
+
+class ImportReceiptTests(TestCase):
+    def test_stale_concurrent_session_cannot_reimport_same_preview(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        user,home=kitchen();self.client.force_login(user)
+        self.client.post('/data/import/',{'file':SimpleUploadedFile('food.csv',b'name,quantity,unit\nRice,2,kg\n')})
+        pending=self.client.session['pantry_import']
+        self.client.post('/data/import/confirm/',{'token':pending['token']})
+        session=self.client.session;session['pantry_import']=pending;session.save()
+        self.client.post('/data/import/confirm/',{'token':pending['token']})
+        self.assertEqual(Item.objects.count(),1)

@@ -35,7 +35,9 @@ def import_inventory(request):
     return render(request,'transfers/import.html',{'form':form})
 
 from django.contrib import messages
-from django.db import transaction
+from django.db import transaction,IntegrityError
+from pantry.models import ImportReceipt
+import hashlib
 from pantry.forms import ItemForm
 @household_required
 @require_POST
@@ -43,10 +45,18 @@ def confirm_import(request):
     pending=request.session.get('pantry_import')
     if not pending or pending['household_id']!=request.household.pk or time.time()-pending['created_at']>1200 or not secrets.compare_digest(pending['token'],request.POST.get('token','')):
         messages.error(request,'This preview expired or belongs to another kitchen. Upload the file again.');return redirect('inventory_import')
-    with transaction.atomic():
-        for row in pending['rows']:
-            form=ItemForm(row)
-            if not form.is_valid():raise ValueError('Previously validated import changed unexpectedly.')
-            item=form.save(commit=False);item.household=request.household;item.save()
+    digest=hashlib.sha256(pending['token'].encode()).hexdigest()
+    try:
+        with transaction.atomic():
+            ImportReceipt.objects.create(household=request.household,token_hash=digest,row_count=len(pending['rows']))
+            for row in pending['rows']:
+                form=ItemForm(row)
+                if not form.is_valid():raise ValueError('Previously validated import changed unexpectedly.')
+                item=form.save(commit=False);item.household=request.household;item.save()
+    except IntegrityError:
+        if ImportReceipt.objects.filter(token_hash=digest,household=request.household).exists():
+            request.session.pop('pantry_import',None)
+            messages.info(request,'This preview was already imported.');return redirect('inventory')
+        raise
     del request.session['pantry_import']
     messages.success(request,f'Imported {len(pending["rows"])} new batches.');return redirect('inventory')

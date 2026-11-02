@@ -127,3 +127,9 @@ class MealPlan(models.Model):
     servings=models.PositiveSmallIntegerField(default=2,validators=[MinValueValidator(1),MaxValueValidator(50)])
     cooked=models.ForeignKey(CookLog,on_delete=models.SET_NULL,null=True,blank=True)
     class Meta:ordering=['date','slot','pk']
+
+class ImportReceipt(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE)
+    token_hash=models.CharField(max_length=64,unique=True)
+    row_count=models.PositiveIntegerField()
+    created_at=models.DateTimeField(auto_now_add=True)
