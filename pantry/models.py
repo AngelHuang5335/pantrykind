@@ -217,6 +217,7 @@ class Ingredient(models.Model):
 
 
 class CookLog(models.Model):
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="cook_logs")
     recipe = models.ForeignKey(Recipe, on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=120)
@@ -259,3 +260,26 @@ class ImportReceipt(models.Model):
     token_hash = models.CharField(max_length=64, unique=True)
     row_count = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PurchaseReceipt(models.Model):
+    """Immutable purchase snapshot, retained even after clearing the shopping list."""
+
+    household = models.ForeignKey(Household, on_delete=models.CASCADE)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    item = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True)
+    source_entry_id = models.PositiveBigIntegerField()
+    request_id = models.UUIDField(unique=True)
+    name = models.CharField(max_length=120)
+    quantity = models.DecimalField(max_digits=12, decimal_places=3)
+    unit = models.CharField(max_length=8, choices=UNITS)
+    expiry_date = models.DateField(null=True, blank=True)
+    location = models.CharField(max_length=12, choices=LOCATIONS)
+    category = models.CharField(max_length=12, choices=CATEGORIES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="positive_purchase")
+        ]

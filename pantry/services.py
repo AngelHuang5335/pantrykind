@@ -93,6 +93,7 @@ def cook_recipe(*, household, recipe_id, actor, servings, request_id):
             existing.household_id != household.pk
             or existing.recipe_id != recipe_id
             or existing.servings != servings
+            or existing.actor_id not in (None, actor.pk)
         ):
             raise ValidationError("This action ID has already been used.")
         return existing
@@ -128,9 +129,88 @@ def cook_recipe(*, household, recipe_id, actor, servings, request_id):
             )
             remaining -= amount * multiplier
     return CookLog.objects.create(
+        actor=actor,
         household=household,
         recipe=recipe,
         title=recipe.title,
         servings=servings,
         request_id=request_id,
+    )
+
+
+@transaction.atomic
+def purchase_shopping(
+    *,
+    household,
+    entry_id,
+    actor,
+    amount,
+    request_id,
+    expiry_date=None,
+    location="pantry",
+    category="other",
+):
+    """A partial purchase creates a separate dated batch and one restock ledger event."""
+    from datetime import date
+    from pantry.models import PurchaseReceipt
+
+    amount = positive_quantity(amount)
+    lock_household(household, actor)
+    receipt = PurchaseReceipt.objects.filter(request_id=request_id).first()
+    if receipt:
+        if (
+            receipt.household_id != household.pk
+            or receipt.actor_id != actor.pk
+            or receipt.source_entry_id != entry_id
+            or receipt.quantity != amount
+            or receipt.expiry_date != expiry_date
+            or receipt.location != location
+            or receipt.category != category
+        ):
+            raise ValidationError("This purchase ID has already been used for different details.")
+        return receipt
+    if expiry_date is not None and type(expiry_date) is not date:
+        raise ValidationError("Enter a valid date on the label.")
+    entry = ShoppingEntry.objects.select_for_update().get(pk=entry_id, household=household)
+    if entry.checked or amount > entry.quantity:
+        raise ValidationError("Purchase no more than the quantity remaining on this list.")
+    item = Item(
+        household=household,
+        name=entry.name,
+        quantity=0,
+        unit=entry.unit,
+        expiry_date=expiry_date,
+        location=location,
+        category=category,
+    )
+    item.full_clean()
+    item.save()
+    record_stock(
+        household=household,
+        item_id=item.pk,
+        actor=actor,
+        kind="restocked",
+        amount=amount,
+        request_id=uuid.uuid5(request_id, "purchase-stock"),
+        note="Purchased from shopping list",
+    )
+    item.refresh_from_db()
+    if amount == entry.quantity:
+        entry.checked = True
+        entry.save(update_fields=["checked"])
+    else:
+        entry.quantity -= amount
+        entry.save(update_fields=["quantity"])
+    return PurchaseReceipt.objects.create(
+        household=household,
+        actor=actor,
+        item=item,
+        source_entry_id=entry.pk,
+        request_id=request_id,
+        name=item.name,
+        quantity=amount,
+        unit=item.unit,
+        expiry_date=expiry_date,
+        location=location,
+        category=category,
     )
