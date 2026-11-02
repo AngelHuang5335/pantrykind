@@ -99,3 +99,12 @@ class Ingredient(models.Model):
     class Meta:
         ordering=['pk']
         constraints=[models.CheckConstraint(condition=models.Q(quantity__gt=0),name='positive_ingredient_quantity')]
+
+class CookLog(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='cook_logs')
+    recipe=models.ForeignKey(Recipe,on_delete=models.SET_NULL,null=True)
+    title=models.CharField(max_length=120)
+    servings=models.PositiveSmallIntegerField()
+    request_id=models.UUIDField(default=uuid.uuid4,unique=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:ordering=['-created_at','-pk']

@@ -38,3 +38,27 @@ def add_to_shopping(household,name,quantity,unit):
         if not ShoppingEntry.objects.filter(pk=entry.pk,quantity__lte=Decimal('999999999')-quantity).update(quantity=F('quantity')+quantity):raise ValidationError('Shopping quantity is too large.')
         entry.refresh_from_db()
     return entry
+
+import uuid
+from pantry.models import Recipe,CookLog
+from pantry.matching import match_recipe
+from decimal import ROUND_UP
+@transaction.atomic
+def cook_recipe(*,household,recipe_id,actor,servings,request_id):
+    recipe=Recipe.objects.get(pk=recipe_id,household=household)
+    if not 1<=servings<=50:raise ValidationError('Choose between 1 and 50 servings.')
+    existing=CookLog.objects.filter(request_id=request_id).first()
+    if existing:
+        if existing.household_id!=household.pk or existing.recipe_id!=recipe_id or existing.servings!=servings:raise ValidationError('This action ID has already been used.')
+        return existing
+    list(Item.objects.select_for_update().filter(household=household,archived=False).values_list('pk',flat=True))
+    matches=match_recipe(recipe,servings)
+    if not matches or any(not m['ready'] for m in matches):raise ValidationError('Some ingredients are missing. Update your pantry or shopping list first.')
+    for match in matches:
+        remaining=match['need_base']
+        for item,multiplier in match['batches']:
+            if remaining<=0:break
+            amount=min(item.quantity,(remaining/multiplier).quantize(Decimal('.001'),rounding=ROUND_UP))
+            record_stock(household=household,item_id=item.pk,actor=actor,kind='used',amount=amount,request_id=uuid.uuid5(request_id,str(item.pk)),note='Cooked: '+recipe.title)
+            remaining-=amount*multiplier
+    return CookLog.objects.create(household=household,recipe=recipe,title=recipe.title,servings=servings,request_id=request_id)
