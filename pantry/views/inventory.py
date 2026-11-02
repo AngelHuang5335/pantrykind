@@ -55,7 +55,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 from pantry.forms import StockActionForm
 from pantry.services import record_stock
-STOCK_ACTIONS={'used':'Use some'}
+STOCK_ACTIONS={'used':'Use some','restocked':'Top up this batch'}
 
 @household_required
 @require_http_methods(['GET','POST'])

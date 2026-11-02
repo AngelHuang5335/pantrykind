@@ -34,3 +34,7 @@ class StockActionViewTests(TestCase):
     def test_action_form_records_usage(self):
         self.client.post(f'/pantry/{self.item.pk}/action/used/',{'amount':'1','request_id':str(uuid4())})
         self.item.refresh_from_db();self.assertEqual(self.item.quantity,1)
+
+class RestockTests(StockTests):
+    def test_restock_increases_quantity(self):
+        self.action('.5',kind='restocked');self.item.refresh_from_db();self.assertEqual(self.item.quantity,Decimal('2.500'))
