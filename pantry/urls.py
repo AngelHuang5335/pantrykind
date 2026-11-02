@@ -89,3 +89,5 @@ urlpatterns += [path('plan/calendar.ics', planner.export_calendar, name='plan_ca
 from pantry.views import insights
 
 urlpatterns += [path('insights/', insights.index, name='insights')]
+
+urlpatterns += [path('activity/', insights.activity, name='activity')]
