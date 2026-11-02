@@ -14,12 +14,17 @@ def index(request):
     items=Item.objects.filter(household=request.household,archived=False)
     query=request.GET.get('q','').strip()[:120]
     if query:items=items.filter(Q(name__icontains=query)|Q(notes__icontains=query))
+    status=request.GET.get('status','')
+    today=timezone.localdate()
+    if status=='soon':items=items.filter(expiry_date__range=(today,today+timedelta(days=7)),quantity__gt=0)
+    elif status=='past':items=items.filter(expiry_date__lt=today,quantity__gt=0)
+    elif status=='undated':items=items.filter(expiry_date__isnull=True)
     category=request.GET.get('category','')
     if category in dict(CATEGORIES):items=items.filter(category=category)
     location=request.GET.get('location','')
     if location in dict(LOCATIONS):items=items.filter(location=location)
     page=Paginator(items.order_by(F('expiry_date').asc(nulls_last=True),'name','pk'),24).get_page(request.GET.get('page'))
-    return render(request,'inventory/index.html',{'items':page,'page':page,'query':query,'category':category,'location':location,'categories':CATEGORIES,'locations':LOCATIONS})
+    return render(request,'inventory/index.html',{'items':page,'page':page,'query':query,'category':category,'location':location,'categories':CATEGORIES,'locations':LOCATIONS,'status':status})
 
 @household_required
 @require_http_methods(['GET','POST'])

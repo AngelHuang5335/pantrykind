@@ -23,3 +23,14 @@ class InventoryAccessTests(TestCase):
     def test_household_is_not_accepted_from_form(self):
         self.client.post('/pantry/new/',{'name':'Rice','category':'grains','location':'pantry','quantity':'2','unit':'kg','household':self.foreign.pk})
         self.assertEqual(Item.objects.get(name='Rice').household,self.home)
+
+class DateFilterTests(TestCase):
+    def test_dates_use_explicit_boundaries(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        user,home=kitchen();self.client.force_login(user)
+        Item.objects.create(household=home,name='Today fruit',expiry_date=timezone.localdate())
+        Item.objects.create(household=home,name='Old fruit',expiry_date=timezone.localdate()-timedelta(days=1))
+        Item.objects.create(household=home,name='No date fruit')
+        r=self.client.get('/pantry/?status=soon')
+        self.assertContains(r,'Today fruit');self.assertNotContains(r,'Old fruit');self.assertNotContains(r,'No date fruit')
