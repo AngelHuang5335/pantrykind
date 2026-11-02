@@ -1,0 +1,19 @@
+{
+  "provider": "GitHub Actions",
+  "run_id": 41414573523,
+  "url": "https://github.com/AngelHuang5335/pantrykind/actions/runs/41414573523",
+  "code_commit": "3371d88c031d0293351fc52a1ccaccc49c66b3bd",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "test (3.12)", "job_id": 125175191800, "conclusion": "success"},
+    {"name": "test (3.13)", "job_id": 125175191667, "conclusion": "success"},
+    {"name": "postgresql", "job_id": 125175191347, "conclusion": "success"},
+    {"name": "browser", "job_id": 125175191799, "conclusion": "success"},
+    {"name": "container", "job_id": 125175191625, "conclusion": "success"}
+  ],
+  "postgresql_tests": 136,
+  "postgresql_race_tests": 6,
+  "browser_journeys": 3,
+  "browser_artifact": "browser-traces",
+  "scope": "Release code at the named revision; the documentation commit recording it triggers a separate workflow run."
+}

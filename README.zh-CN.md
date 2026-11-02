@@ -60,6 +60,6 @@ python -m venv .venv
 - **并发一致性：** 所有家庭写操作先锁定家庭，再处理明细。烹饪、购买和库存操作在锁内检查重复请求；旧编辑页面会提示冲突。PostgreSQL 适合多人共享部署，SQLite 保留简单的本地运行方式。
 - **可靠提醒：** 用户在 **Inbox** 主动开启提醒，按家庭时区和指定小时生成每日快照。后台任务支持去重、失败重试、崩溃后的租约恢复和过期确认拦截。关闭提醒会取消待处理任务。目前交付到站内收件箱，不发送邮件，也不推送浏览器通知。
 - **恢复演练：** 新增 `verify_backup` 和 `restore_pantry`，检查完整性、外键和项目表结构，只恢复到新的离线候选文件；不会覆盖在线数据库。已用演示数据验证恢复后登录、库存、购买凭据和收件箱。
-- **可复查的验证：** 已有真实 Chrome 操作记录、手机宽度截图和匹配性能原始数据。CI 配置了 PostgreSQL 并发测试与 Playwright 完整流程测试；本地验证结果与尚待 CI 执行的检查分别说明，不把配置完成等同于测试通过。
+- **可复查的验证：** 已有真实 Chrome 操作记录、手机宽度截图和匹配性能原始数据。GitHub Actions 已实际通过 Python 3.12/3.13 校验、136 项 PostgreSQL 测试（含 6 项真实并发测试）、3 条 Chromium 完整流程和 Docker 构建，验证文档保留了对应运行链接和代码版本。
 
 查看 [事务约定](docs/TRANSACTIONS.md)、[提醒运维](docs/REMINDERS.md)、[PostgreSQL 部署](docs/POSTGRESQL.md)、[浏览器测试](docs/BROWSER-TESTS.md) 和 [验证记录](docs/VALIDATION.md)。

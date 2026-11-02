@@ -120,7 +120,7 @@ python manage.py makemigrations --check --dry-run
 python manage.py test --settings=config.test_settings
 ```
 
-The fast test settings use a weak password hasher **only for isolated tests**; production settings retain Django's normal password hashing. CI includes Python 3.12/3.13, PostgreSQL races, container builds and an opt-in [Playwright browser suite](docs/BROWSER-TESTS.md). [Validation notes](docs/VALIDATION.md) distinguish local evidence from configured CI checks.
+The fast test settings use a weak password hasher **only for isolated tests**; production settings retain Django's normal password hashing. CI includes Python 3.12/3.13, PostgreSQL races, container builds and an opt-in [Playwright browser suite](docs/BROWSER-TESTS.md). [Validation notes](docs/VALIDATION.md) record the local checks and the passing CI run for the release code.
 
 The recipe catalogue uses one stock index and three database queries, independent of recipe count. A reproducible synthetic benchmark compares 500 recipes and 2,000 batches; see [performance scope and results](docs/PERFORMANCE.md).
 

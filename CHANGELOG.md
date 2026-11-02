@@ -18,8 +18,8 @@
 
 Local validation: 130 tests pass; six PostgreSQL-only races skip on SQLite.
 Production checks, real-browser smoke flows and the restore drill pass.
-PostgreSQL execution, the portable Playwright suite and Docker builds await an
-environment with the required services/dependencies; see [validation](docs/VALIDATION.md).
+GitHub Actions subsequently passed both Python versions, all 136 PostgreSQL tests,
+three Chromium journeys and the Docker build; see [validation](docs/VALIDATION.md).
 
 ## 0.1.0 — 2026-11-02
 

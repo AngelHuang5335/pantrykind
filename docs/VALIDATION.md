@@ -37,15 +37,25 @@ lease recovery, stale-worker fencing, retry backoff, opt-out and private inboxes
 - Synthetic matching timings include all five samples and exact workload scope.
   They measure in-memory matching only: [performance notes](PERFORMANCE.md).
 
-## Configured independent checks
+## Verified independent checks
 
-CI defines Python 3.12/3.13 suites, PostgreSQL 17 with six independent-connection
-races, an opt-in Playwright/Chromium live-server suite and a Docker image build.
-The host Docker daemon is unavailable and local dependency downloads are blocked,
-so PostgreSQL, Docker builds and the portable Playwright suite were not run
-locally. The Chrome smoke check above is distinct from the Playwright suite.
-Check the actual Actions results after publication before treating these checks
-as passing. Configuration alone is not evidence that they executed successfully.
+[GitHub Actions run #2](https://github.com/AngelHuang5335/pantrykind/actions/runs/41414573523)
+passed all five jobs on code commit `3371d88c031d0293351fc52a1ccaccc49c66b3bd`:
+
+| Job | Verified result |
+| --- | --- |
+| Python 3.12 | Lint, formatting, migrations, checks, 130 SQLite tests and static collection pass; six PostgreSQL-only races skip |
+| Python 3.13 | Same complete check sequence passes |
+| PostgreSQL 17 | All 136 tests pass, including six independent-connection races |
+| Chromium browser | Three live-server journeys pass; screenshots and traces uploaded |
+| Container | Non-root Docker image builds, including static collection |
+
+The [machine-readable result](benchmarks/github-actions-v02.json) records that
+run and its exact code revision. The documentation commit that records it has its
+own subsequent workflow run. The host Docker daemon remains unavailable, so the
+PostgreSQL, Docker and portable Playwright evidence comes from CI. The existing
+Chrome smoke check above is separate local evidence. CI exposed and verified fixes
+for image directory ownership and Playwright/Django event-loop isolation.
 
 Development uses real incremental commits with `Why:` bodies and ordinary
 timestamps. No legacy project history, generated credentials, local browser
