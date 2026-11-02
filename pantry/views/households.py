@@ -40,7 +40,7 @@ def settings(request):
     if request.method=='POST':
         if request.membership.role!='owner':return HttpResponseForbidden('Only the kitchen owner can change these settings.')
         if form.is_valid():form.save();messages.success(request,'Kitchen preferences updated.');return redirect('household_settings')
-    return render(request,'households/settings.html',{'form':form,'members':request.household.memberships.select_related('user'),'kitchens':request.user.pantry_memberships.select_related('household')})
+    return render(request,'households/settings.html',{'form':form,'members':request.household.memberships.select_related('user'),'kitchens':request.user.pantry_memberships.select_related('household'),'invite_url':request.session.pop('pantry_invite_url',None),'invitations':request.household.invitations.filter(used_at__isnull=True,expires_at__gt=timezone.now())})
 
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
@@ -50,3 +50,32 @@ def switch(request,pk):
     member=get_object_or_404(Membership,user=request.user,household_id=pk)
     request.session['household_id']=member.household_id
     return redirect('dashboard')
+
+import hashlib,secrets
+from datetime import timedelta
+from django.utils import timezone
+from django.urls import reverse
+from pantry.models import Invitation
+
+@household_required
+@require_POST
+def invite(request):
+    if request.membership.role!='owner':return HttpResponseForbidden('Only the owner can invite people.')
+    token=secrets.token_urlsafe(32)
+    Invitation.objects.create(household=request.household,token_hash=hashlib.sha256(token.encode()).hexdigest(),expires_at=timezone.now()+timedelta(days=7))
+    request.session['pantry_invite_url']=request.build_absolute_uri(reverse('invitation_accept',args=[token]))
+    return redirect('household_settings')
+
+@login_required
+@require_http_methods(['GET','POST'])
+def accept(request,token):
+    token_hash=hashlib.sha256(token.encode()).hexdigest()
+    invitation=get_object_or_404(Invitation,token_hash=token_hash,used_at__isnull=True,expires_at__gt=timezone.now())
+    if request.method=='POST':
+        with transaction.atomic():
+            invitation=get_object_or_404(Invitation.objects.select_for_update(),pk=invitation.pk,used_at__isnull=True,expires_at__gt=timezone.now())
+            Membership.objects.get_or_create(household=invitation.household,user=request.user,defaults={'role':'member'})
+            invitation.used_at=timezone.now();invitation.save(update_fields=['used_at'])
+            request.session['household_id']=invitation.household_id
+        messages.success(request,'Welcome to your shared kitchen.');return redirect('dashboard')
+    return render(request,'households/accept.html',{'invitation':invitation})

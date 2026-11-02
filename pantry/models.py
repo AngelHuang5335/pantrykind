@@ -111,3 +111,10 @@ class CookLog(models.Model):
     request_id=models.UUIDField(default=uuid.uuid4,unique=True)
     created_at=models.DateTimeField(auto_now_add=True)
     class Meta:ordering=['-created_at','-pk']
+
+class Invitation(models.Model):
+    household=models.ForeignKey(Household,on_delete=models.CASCADE,related_name='invitations')
+    token_hash=models.CharField(max_length=64,unique=True)
+    expires_at=models.DateTimeField()
+    used_at=models.DateTimeField(null=True,blank=True)
+    created_at=models.DateTimeField(auto_now_add=True)

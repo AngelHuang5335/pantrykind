@@ -59,3 +59,7 @@ urlpatterns += [path('recipes/<int:pk>/delete/', recipes.delete, name='recipe_de
 urlpatterns += [path('households/settings/', households.settings, name='household_settings')]
 
 urlpatterns += [path('households/<int:pk>/switch/', households.switch, name='household_switch')]
+
+urlpatterns += [path('households/invite/', households.invite, name='household_invite')]
+
+urlpatterns += [path('join/<str:token>/', households.accept, name='invitation_accept')]
