@@ -49,3 +49,16 @@ class Item(models.Model):
         if days==0:return 'Today'
         if days<=7:return 'Use soon'
         return 'In date'
+
+import uuid
+class StockEvent(models.Model):
+    item=models.ForeignKey(Item,on_delete=models.CASCADE,related_name='events')
+    actor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True)
+    kind=models.CharField(max_length=12,choices=[('used','Used'),('wasted','Discarded'),('restocked','Restocked')])
+    amount=models.DecimalField(max_digits=12,decimal_places=3)
+    note=models.CharField(max_length=200,blank=True)
+    request_id=models.UUIDField(default=uuid.uuid4,unique=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering=['-created_at','-pk']
+        constraints=[models.CheckConstraint(condition=models.Q(amount__gt=0),name='positive_stock_event')]

@@ -1,0 +1,25 @@
+from decimal import Decimal
+from uuid import uuid4
+from django.core.exceptions import ValidationError
+from django.test import TestCase
+from pantry.models import Item,StockEvent
+from pantry.services import record_stock
+from pantry.tests.factories import kitchen
+class StockTests(TestCase):
+    def setUp(self):
+        self.user,self.home=kitchen();self.item=Item.objects.create(household=self.home,name='Rice',quantity=2,unit='kg')
+    def action(self,amount,kind='used',key=None):
+        return record_stock(household=self.home,item_id=self.item.pk,actor=self.user,kind=kind,amount=amount,request_id=key or uuid4())
+    def test_subtract_and_record(self):
+        self.action('.25');self.item.refresh_from_db();self.assertEqual(self.item.quantity,Decimal('1.750'));self.assertEqual(StockEvent.objects.count(),1)
+    def test_overdraw_rolls_back(self):
+        with self.assertRaises(ValidationError):self.action(3)
+        self.item.refresh_from_db();self.assertEqual(self.item.quantity,2);self.assertFalse(StockEvent.objects.exists())
+    def test_repeated_request_is_not_double_counted(self):
+        key=uuid4();self.action(1,key=key);self.action(1,key=key);self.item.refresh_from_db();self.assertEqual(self.item.quantity,1)
+    def test_nonfinite_and_precision_are_rejected(self):
+        for amount in ['NaN','Infinity','0','-1','.0001']:
+            with self.assertRaises(ValidationError):self.action(amount)
+    def test_foreign_household_is_rejected(self):
+        user,other=kitchen('other')
+        with self.assertRaises(Item.DoesNotExist):record_stock(household=other,item_id=self.item.pk,actor=user,kind='used',amount=1,request_id=uuid4())
