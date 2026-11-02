@@ -45,7 +45,7 @@ def detail(request,pk):
     serving_form=ServingsForm(request.GET or {'servings':recipe.servings})
     servings=serving_form.cleaned_data['servings'] if serving_form.is_valid() else recipe.servings
     matches=match_recipe(recipe,servings)
-    return render(request,'recipes/detail.html',{'recipe':recipe,'matches':matches,'serving_form':serving_form,'servings':servings,'ready':bool(matches) and all(m['ready'] for m in matches)})
+    return render(request,'recipes/detail.html',{'recipe':recipe,'matches':matches,'cook_request_id':__import__('uuid').uuid4(),'serving_form':serving_form,'servings':servings,'ready':bool(matches) and all(m['ready'] for m in matches)})
 
 @household_required
 @require_POST
@@ -66,3 +66,20 @@ def shop_missing(request,pk):
             gap=missing-(current.quantity if current else 0)
             if gap>0:add_to_shopping(request.household,match['name'],gap,match['unit'])
     messages.success(request,'Added only the missing quantities to your list.');return redirect('shopping')
+
+@household_required
+@require_POST
+def cook(request,pk):
+    import uuid
+    from django.core.exceptions import ValidationError
+    from pantry.forms import ServingsForm
+    from pantry.services import cook_recipe
+    recipe=get_object_or_404(Recipe,pk=pk,household=request.household)
+    form=ServingsForm(request.POST)
+    try:
+        if not form.is_valid():raise ValidationError('Choose a valid number of servings.')
+        key=uuid.UUID(request.POST.get('request_id',''))
+        cook_recipe(household=request.household,recipe_id=pk,actor=request.user,servings=form.cleaned_data['servings'],request_id=key)
+    except (ValidationError,ValueError) as error:messages.error(request,' '.join(error.messages) if isinstance(error,ValidationError) else 'Invalid meal request. Please try again.')
+    else:messages.success(request,'Meal recorded. Your pantry has been updated.')
+    return redirect('recipe_detail',pk=pk)
